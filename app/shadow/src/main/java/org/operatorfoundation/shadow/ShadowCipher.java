@@ -22,9 +22,9 @@ public class ShadowCipher {
             default:
                 throw new IllegalStateException("Unexpected value: " + config.cipherMode);
         }
-        byte[] byteArray = new byte[10];
+        byte[] salt = new byte[saltSize];
         Random rando = new Random();
-        return rando.nextBytes(byteArray);
+        return rando.nextBytes(salt);
     }
 
 }
