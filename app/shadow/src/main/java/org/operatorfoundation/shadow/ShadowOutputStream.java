@@ -14,7 +14,6 @@ public class ShadowOutputStream {
         this.encryptionCipher = encryptionCipher;
     }
 
-
     public void write(int b) throws IOException {
         byte[] plainText = new byte[b];
         write(plainText);
@@ -22,7 +21,7 @@ public class ShadowOutputStream {
 
     public void write(byte[] b) throws IOException {
         if (b != null && b.length > 0) {
-            //TODO(it wont let me use the += but maybe the below method is possibly effective)
+            //TODO(it wont let me use the += so this is just a placeholder)
             buffer = b;
             while (buffer.length > 0) {
                 int numBytesToSend = Integer.min(ShadowCipher.maxPayloadSize, buffer.length);

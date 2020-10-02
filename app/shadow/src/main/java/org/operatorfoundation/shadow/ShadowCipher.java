@@ -38,4 +38,8 @@ public class ShadowCipher {
     public byte[] pack(byte[] bytesToSend) {
         return bytesToSend;
     }
+
+    public byte[] decrypt(byte[] encryptedLengthData) {
+        return encryptedLengthData;
+    }
 }
