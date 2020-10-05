@@ -2,7 +2,12 @@ package org.operatorfoundation.shadow;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.util.Arrays;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
 
 public class ShadowOutputStream {
     final OutputStream outputStream;
@@ -14,12 +19,12 @@ public class ShadowOutputStream {
         this.encryptionCipher = encryptionCipher;
     }
 
-    public void write(int b) throws IOException {
+    public void write(int b) throws IOException, InvalidKeyException, BadPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException {
         byte[] plainText = new byte[b];
         write(plainText);
     }
 
-    public void write(byte[] b) throws IOException {
+    public void write(byte[] b) throws IOException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
         if (b != null && b.length > 0) {
             //TODO(it wont let me use the += so this is just a placeholder)
             buffer = b;

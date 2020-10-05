@@ -3,7 +3,12 @@ package org.operatorfoundation.shadow;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.util.Arrays;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
 
 public class ShadowInputStream {
     final InputStream networkInputStream;
@@ -15,7 +20,7 @@ public class ShadowInputStream {
         this.decryptionCipher = decryptionCipher;
     }
 
-    public int read(byte[] b) throws IOException {
+    public int read(byte[] b) throws IOException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
         if (b != null && b.length > 0) {
 
             // puts the bytes in a buffer
@@ -56,7 +61,7 @@ public class ShadowInputStream {
         return 0;
     }
 
-    public int read() throws IOException {
+    public int read() throws IOException, InvalidKeyException, BadPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException {
         byte[] result = new byte[0];
         read(result);
         return ByteBuffer.wrap(result).getInt();
