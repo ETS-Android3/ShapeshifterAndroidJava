@@ -2,8 +2,8 @@ package org.operatorfoundation.shadow;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.Vector;
 
 public class ShadowInputStream {
     final InputStream networkInputStream;
@@ -46,13 +46,20 @@ public class ShadowInputStream {
             byte[] encryptedPayload = Utility.readNBytes(networkInputStream, payloadLength + ShadowCipher.tagSize);
             byte[] payload = decryptionCipher.decrypt(encryptedPayload);
 
-            //TODO(figure out the += for byte arrays)
-            //put payload into buffer
-            //buffer = payload;
-            int resultSize = Integer.min(b.length, buffer.length);
 
+            //TODO(not sure how to do the copyInto and sliceArray to put payload into buffer and take it out)
+            //TODO(figure out the += for byte arrays)
+
+            return Integer.min(b.length, buffer.length);
         }
+        //TODO(im truly at a loss for this class)
         return 0;
+    }
+
+    public int read() throws IOException {
+        byte[] result = new byte[0];
+        read(result);
+        return ByteBuffer.wrap(result).getInt();
     }
 }
 

@@ -1,8 +1,34 @@
 package org.operatorfoundation.shadow;
 
+import org.bouncycastle.crypto.generators.HKDFBytesGenerator;
+import org.bouncycastle.crypto.digests.SHA1Digest;
+import org.bouncycastle.crypto.params.HKDFParameters;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.AlgorithmParameterSpec;
+import java.util.Arrays;
 import java.util.Random;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.SecretKey;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
 public class ShadowCipher {
+    static Cipher cipher;
+    static ShadowConfig config;
+    static SecretKey key;
+    static int counter = 0;
+    static byte[] salt;
     static int lengthWithTagSize = 2 + 16;
     static int tagSizeBits = 16 * 8;
     static int tagSize = 16;
@@ -10,10 +36,69 @@ public class ShadowCipher {
     //TODO(Could i set the saltSize static variable in a switch loop)
     static int saltSize = 16;
 
-    public ShadowCipher(ShadowConfig config, byte[] salt) {
+    public ShadowCipher(ShadowConfig config, byte[] salt) throws NoSuchAlgorithmException {
     }
 
     //TODO(JAVA DOESNT HAVE COMPANION OBJECTSSSSSS!!!!!!)
+    public SecretKey createSecretKey(ShadowConfig config, byte[] salt) throws NoSuchAlgorithmException {
+        byte[] presharedKey = kdf(config);
+        return hkdfSha1(config, salt, presharedKey);
+    }
+
+    public SecretKey hkdfSha1(ShadowConfig config, byte[] salt, byte[] psk) {
+        String infoString = "ss-subkey";
+        byte[] info = infoString.getBytes();
+        HKDFBytesGenerator hkdf = new HKDFBytesGenerator(new SHA1Digest());
+        hkdf.init(new HKDFParameters(psk, salt, info));
+        byte[] okm = new byte[psk.length];
+        hkdf.generateBytes(okm, 0, psk.length);
+        String keyAlgorithm = null;
+        switch (config.cipherMode) {
+            case AES_128_GCM:
+            case AES_256_GCM: {
+                keyAlgorithm = "AES";
+                break;
+            }
+            case CHACHA20_IETF_POLY1305: {
+                keyAlgorithm = "ChaCha20";
+                break;
+            }
+            default:
+                throw new IllegalStateException("Unexpected or unsupported Algorithm value: " + keyAlgorithm);
+        }
+        return new SecretKeySpec(okm, keyAlgorithm);
+    }
+
+    public byte[] kdf(ShadowConfig config) throws NoSuchAlgorithmException {
+        byte[] buffer = new byte[0];
+        byte[] prev = new byte[0];
+        MessageDigest hash = MessageDigest.getInstance("MD5");
+        int keylen = 0;
+        switch (config.cipherMode) {
+            case AES_128_GCM: {
+                keylen = 16;
+                break;
+            }
+            case CHACHA20_IETF_POLY1305:
+            case AES_256_GCM: {
+                keylen = 32;
+                break;
+            }
+        }
+
+        while (buffer.length < keylen) {
+            hash.update(prev);
+            hash.update(config.password.getBytes());
+            //TODO(take advil for the headaches i've gotten from java not having sliceArray or += for byteArrays)
+            System.arraycopy(hash.digest(), 0, buffer, 0, hash.getDigestLength());
+            int index = buffer.length - hash.getDigestLength();
+            prev = Arrays.copyOfRange(buffer, index, buffer.length);
+            hash.reset();
+        }
+
+        return Arrays.copyOfRange(buffer, 0, keylen - 1);
+    }
+
     public static byte[] createSalt(ShadowConfig config) {
         int saltSize;
         switch (config.cipherMode) {
@@ -35,11 +120,118 @@ public class ShadowCipher {
         return salt;
     }
 
-    public byte[] pack(byte[] bytesToSend) {
-        return bytesToSend;
+
+    //inits
+    {
+        key = createSecretKey(config, salt);
+        switch (config.cipherMode) {
+            case AES_128_GCM: {
+                try {
+                    cipher = Cipher.getInstance("AES_128/GCM/NoPadding");
+                } catch (NoSuchPaddingException e) {
+                    e.printStackTrace();
+                }
+            }
+            case AES_256_GCM:
+                try {
+                    cipher = Cipher.getInstance("AES_256/GCM/NoPadding");
+                } catch (NoSuchPaddingException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case CHACHA20_IETF_POLY1305:
+                try {
+                    cipher = Cipher.getInstance("CHACHA20_IETF/POLY1305/NoPadding");
+                } catch (NoSuchPaddingException e) {
+                    e.printStackTrace();
+                }
+                break;
+        }
     }
 
-    public byte[] decrypt(byte[] encryptedLengthData) {
-        return encryptedLengthData;
+    public byte[] pack(byte[] plaintext) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+        // find the length of plaintext
+        int plaintextLength = plaintext.length;
+
+        // turn the length into two shorts and put them into an array
+        short shortPlaintextLength = (short) plaintextLength;
+        short leftShort = (short) (shortPlaintextLength / 256);
+        short rightShort = (short) (shortPlaintextLength % 256);
+        byte leftByte = (byte) (leftShort);
+        byte rightByte = (byte) (rightShort);
+        byte[] lengthBytes = {leftByte, rightByte};
+
+        // encrypt the length and the payload, adding a tag to each
+        byte[] encryptedLengthBytes = encrypt(lengthBytes);
+        byte[] encryptedPayload = encrypt(plaintext);
+        //TODO(take even more advil because it seems java has zero ways to properly deal with byte arrays)
+        byte[] combined = new byte[encryptedLengthBytes.length + encryptedPayload.length];
+        System.arraycopy(encryptedLengthBytes, 0, combined, 0, encryptedLengthBytes.length);
+        System.arraycopy(encryptedPayload, 0, combined, encryptedLengthBytes.length, encryptedPayload.length);
+
+        return combined;
+    }
+
+    private byte[] encrypt(byte[] plaintext) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+        byte[] nonceBytes = nonce();
+        AlgorithmParameterSpec ivSpec;
+        switch (config.cipherMode) {
+            case AES_128_GCM:
+            case AES_256_GCM: {
+                ivSpec = new GCMParameterSpec(tagSizeBits, nonceBytes);
+                break;
+            }
+            case CHACHA20_IETF_POLY1305: {
+                ivSpec = new IvParameterSpec(nonceBytes);
+                break;
+            }
+            default:
+                throw new IllegalStateException();
+        }
+        cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+
+        //increment counter every time nonce is used (encrypt/decrypt)
+        counter += 1;
+
+        return cipher.doFinal(plaintext);
+    }
+
+    public byte[] decrypt(byte[] encrypted) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+        byte[] nonceBytes = nonce();
+        AlgorithmParameterSpec ivSpec;
+        switch (config.cipherMode) {
+            case AES_128_GCM:
+            case AES_256_GCM: {
+                ivSpec = new GCMParameterSpec(tagSizeBits, nonceBytes);
+                break;
+            }
+            case CHACHA20_IETF_POLY1305: {
+                ivSpec = new IvParameterSpec(nonceBytes);
+                break;
+            }
+            default:
+                throw new IllegalStateException();
+        }
+        cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+
+        //increment counter every time nonce is used (encrypt/decrypt)
+        counter += 1;
+
+        return cipher.doFinal(encrypted);
+    }
+
+    public byte[] nonce() {
+        // nonce must be 12 bytes
+        ByteBuffer buffer = ByteBuffer.allocate(12);
+        // nonce is little Endian
+        buffer.order(ByteOrder.LITTLE_ENDIAN);
+        // create a byte array from counter
+        buffer.putLong(counter);
+        buffer.put((byte) 0);
+        buffer.put((byte) 0);
+        buffer.put((byte) 0);
+        buffer.put((byte) 0);
+
+        return buffer.array();
     }
 }
