@@ -10,16 +10,19 @@ import java.util.Arrays;
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 
+// This abstract class is the superclass of all classes representing an input stream of bytes.
 public class ShadowInputStream {
     final InputStream networkInputStream;
     final ShadowCipher decryptionCipher;
     byte[] buffer = new byte[0];
 
+    // Applications that need to define a subclass of InputStream must always provide a method that returns the next byte of input.
     public ShadowInputStream(InputStream networkInputStream, ShadowCipher decryptionCipher) {
         this.networkInputStream = networkInputStream;
         this.decryptionCipher = decryptionCipher;
     }
 
+    // Reads some number of bytes from the input stream and stores them into the buffer array b.
     public int read(byte[] b) throws IOException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
         if (b != null && b.length > 0) {
 
@@ -61,8 +64,10 @@ public class ShadowInputStream {
         return 0;
     }
 
+    // Reads the next byte of data from the input stream.
     public int read() throws IOException, InvalidKeyException, BadPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException {
         byte[] result = new byte[0];
+        // read bytes up to payload length (4)
         read(result);
         return ByteBuffer.wrap(result).getInt();
     }

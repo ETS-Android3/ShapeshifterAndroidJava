@@ -5,6 +5,7 @@ public class ShadowConfig {
     final String cipherName;
     public CipherMode cipherMode;
 
+    // ShadowConfig is a class that implements the arguments necessary for a Shadowsocks connection.
     public ShadowConfig(String password, String cipherName) {
         this.password = password;
         this.cipherName = cipherName;

@@ -23,6 +23,7 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+//TODO(since the class requires a function of either main or the same name, where does the documentation go and should they have different or the same thing?)
 public class ShadowCipher {
     static Cipher cipher;
     static ShadowConfig config;
@@ -36,15 +37,20 @@ public class ShadowCipher {
     //TODO(Could i set the saltSize static variable in a switch loop)
     static int saltSize = 16;
 
+    // ShadowCipher contains the encryption and decryption methods.
     public ShadowCipher(ShadowConfig config, byte[] salt) throws NoSuchAlgorithmException {
     }
 
     //TODO(JAVA DOESNT HAVE COMPANION OBJECTSSSSSS!!!!!!)
+
+    // Create a secret key using the two key derivation functions.
     public SecretKey createSecretKey(ShadowConfig config, byte[] salt) throws NoSuchAlgorithmException {
         byte[] presharedKey = kdf(config);
         return hkdfSha1(config, salt, presharedKey);
     }
 
+    // Key derivation functions:
+    // Derives the secret key from the preshared key and adds the salt.
     public SecretKey hkdfSha1(ShadowConfig config, byte[] salt, byte[] psk) {
         String infoString = "ss-subkey";
         byte[] info = infoString.getBytes();
@@ -69,6 +75,7 @@ public class ShadowCipher {
         return new SecretKeySpec(okm, keyAlgorithm);
     }
 
+    // Derives the pre-shared key from the config.
     public byte[] kdf(ShadowConfig config) throws NoSuchAlgorithmException {
         byte[] buffer = new byte[0];
         byte[] prev = new byte[0];
@@ -99,6 +106,7 @@ public class ShadowCipher {
         return Arrays.copyOfRange(buffer, 0, keylen - 1);
     }
 
+    // Creates a byteArray of a specified length containing random bytes.
     public static byte[] createSalt(ShadowConfig config) {
         int saltSize;
         switch (config.cipherMode) {
@@ -121,7 +129,7 @@ public class ShadowCipher {
     }
 
 
-    //inits
+    // Init block:
     {
         key = createSecretKey(config, salt);
         switch (config.cipherMode) {
@@ -149,6 +157,8 @@ public class ShadowCipher {
         }
     }
 
+    // [encrypted payload length][length tag] + [encrypted payload][payload tag]
+    // Pack takes the data above and packs them into a singular byte array.
     public byte[] pack(byte[] plaintext) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         // find the length of plaintext
         int plaintextLength = plaintext.length;
@@ -164,7 +174,7 @@ public class ShadowCipher {
         // encrypt the length and the payload, adding a tag to each
         byte[] encryptedLengthBytes = encrypt(lengthBytes);
         byte[] encryptedPayload = encrypt(plaintext);
-        //TODO(take even more advil because it seems java has zero ways to properly deal with byte arrays)
+        //TODO(take even more advil because it seems java is hiding all of the ways to deal with byte arrays in the way we need)
         byte[] combined = new byte[encryptedLengthBytes.length + encryptedPayload.length];
         System.arraycopy(encryptedLengthBytes, 0, combined, 0, encryptedLengthBytes.length);
         System.arraycopy(encryptedPayload, 0, combined, encryptedLengthBytes.length, encryptedPayload.length);
@@ -172,6 +182,7 @@ public class ShadowCipher {
         return combined;
     }
 
+    // Encrypts the data and increments the nonce counter.
     private byte[] encrypt(byte[] plaintext) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         byte[] nonceBytes = nonce();
         AlgorithmParameterSpec ivSpec;
@@ -190,12 +201,13 @@ public class ShadowCipher {
         }
         cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
 
-        //increment counter every time nonce is used (encrypt/decrypt)
+        // increment counter every time nonce is used (encrypt/decrypt)
         counter += 1;
 
         return cipher.doFinal(plaintext);
     }
 
+    // Decrypts data and increments the nonce counter.
     public byte[] decrypt(byte[] encrypted) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         byte[] nonceBytes = nonce();
         AlgorithmParameterSpec ivSpec;
@@ -220,6 +232,7 @@ public class ShadowCipher {
         return cipher.doFinal(encrypted);
     }
 
+    // Create a nonce using our counter.
     public byte[] nonce() {
         // nonce must be 12 bytes
         ByteBuffer buffer = ByteBuffer.allocate(12);
