@@ -34,15 +34,18 @@ public class ShadowOutputStream {
             // put into buffer
             //TODO(it wont let me use the += so this is just a placeholder)
             buffer = b;
-            while (buffer.length > 0) {
-                int numBytesToSend = Integer.min(ShadowCipher.maxPayloadSize, buffer.length);
-                // make a copy of the buffer
-                //TODO(since sliceArray isn't here, this is what i found to work)
-                //TODO(copyOfRange is inclusive while the original was inclusive.  double check that the -1 is correct)
-                byte[] bytesToSend = Arrays.copyOfRange(buffer, numBytesToSend, buffer.length - 1);
+            int offset = 0;
+            while (offset < buffer.length) {
+                int numBytesToSend = Integer.min(ShadowCipher.maxPayloadSize, buffer.length - offset);
+
+                // take bytes out of buffer
+                byte[] bytesToSend = new byte[numBytesToSend];
+                System.arraycopy(buffer, offset, bytesToSend, 0, numBytesToSend);
 
                 byte[] cipherText = encryptionCipher.pack(bytesToSend);
                 outputStream.write(cipherText);
+
+                offset += numBytesToSend;
             }
         }
     }

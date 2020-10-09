@@ -29,9 +29,8 @@ public class ShadowInputStream {
             // puts the bytes in a buffer
             if (b.length <= buffer.length) {
                 int resultSize = Integer.min(b.length, buffer.length);
-                System.arraycopy(b, 0, buffer, 0, resultSize);
-                //TODO(just like in OutputStream, not sure if this sub for sliceArray will work)
-                buffer = Arrays.copyOfRange(buffer, resultSize + 1, buffer.length + 1);
+                System.arraycopy(buffer, 0, b, 0, resultSize);
+                buffer = Arrays.copyOfRange(buffer, resultSize + 1, buffer.length - 1);
 
                 return resultSize;
             }
@@ -53,10 +52,6 @@ public class ShadowInputStream {
             //read and decrypt payload with the resulting length
             byte[] encryptedPayload = Utility.readNBytes(networkInputStream, payloadLength + ShadowCipher.tagSize);
             byte[] payload = decryptionCipher.decrypt(encryptedPayload);
-
-
-            //TODO(not sure how to do the copyInto and sliceArray to put payload into buffer and take it out)
-            //TODO(figure out the += for byte arrays)
 
             return Integer.min(b.length, buffer.length);
         }

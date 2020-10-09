@@ -22,8 +22,10 @@ public class ShadowSocket {
     static ShadowCipher encryptionCipher;
     static ShadowCipher decryptionCipher;
     static Boolean connectionStatus;
+    private final ShadowConfig config;
 
-    ShadowSocket(ShadowConfig config) {
+    public ShadowSocket(ShadowConfig config) {
+        this.config = config;
     }
 
     // Constructors:
@@ -106,8 +108,6 @@ public class ShadowSocket {
                 }
                 handshake();
             }
-
-            //TODO(some methods dont have the variables i.e: socket.channel like they do in kotlin)
 
             // Returns the unique SocketChannel object associated with this socket, if any.
             public SocketChannel getChannel() {
@@ -271,17 +271,17 @@ public class ShadowSocket {
     }
 
     // Sends the salt through the output stream.
-    private void sendSalt() {
-//        socket.outputStream.write(encryptionCipher.salt);
+    private void sendSalt() throws IOException {
+        socket.getOutputStream().write(encryptionCipher.salt);
     }
 
     // Receives the salt through the input stream.
     private void receiveSalt() throws NoSuchAlgorithmException, IOException {
-//        byte[] result = Utility.readNBytes(socket.inputStream, ShadowCipher.saltSize);
-//        if (result.length == ShadowCipher.salt.length) {
-//            decryptionCipher = new ShadowCipher(config, result);
-//        } else {
-//            throw new IOException();
-//        }
+        byte[] result = Utility.readNBytes(socket.getInputStream(), ShadowCipher.saltSize);
+        if (result.length == ShadowCipher.salt.length) {
+            decryptionCipher = new ShadowCipher(config, result);
+        } else {
+            throw new IOException();
+        }
     }
 }
