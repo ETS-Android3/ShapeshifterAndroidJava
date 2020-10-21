@@ -1,6 +1,5 @@
 package org.operatorfoundation.shadow;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -120,13 +119,13 @@ public class ShadowSocket {
             }
 
             // Returns an input stream and the decryption cipher for this socket.
-//            public InputStream getInputStream() throws IOException {
-//                ShadowCipher cipher = decryptionCipher;
-//                if (cipher != null) {
-//                    return new ShadowInputStream(socket.getInputStream(), cipher);
-//                }
-//                throw new IOException();
-//            }
+            public InputStream getInputStream() throws IOException {
+                ShadowCipher cipher = decryptionCipher;
+                if (cipher != null) {
+                    return new ShadowInputStream(socket.getInputStream(), cipher);
+                }
+                throw new IOException();
+            }
 
             // Tests if SO_KEEPALIVE is enabled.
             public boolean getKeepAlive() {
@@ -154,9 +153,9 @@ public class ShadowSocket {
             }
 
             // Returns an output stream and the encryption cipher for this socket.
-//            public OutputStream getOutputStream() throws IOException {
-//                return new ShadowOutputStream(socket.getOutputStream(), encryptionCipher);
-//            }
+            public OutputStream getOutputStream() throws IOException {
+                return new ShadowOutputStream(socket.getOutputStream(), encryptionCipher);
+            }
 
             // Returns the remote port number to which this socket is connected.
             public int getPort() {

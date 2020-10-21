@@ -11,7 +11,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 
 // This abstract class is the superclass of all classes representing an input stream of bytes.
-public class ShadowInputStream {
+public class ShadowInputStream extends InputStream {
     final InputStream networkInputStream;
     final ShadowCipher decryptionCipher;
     byte[] buffer = new byte[0];
@@ -23,7 +23,7 @@ public class ShadowInputStream {
     }
 
     // Reads some number of bytes from the input stream and stores them into the buffer array b.
-    public int read(byte[] b) throws IOException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
+    public int read(byte[] b) throws IOException {
         if (b != null && b.length > 0) {
 
             // puts the bytes in a buffer
@@ -34,7 +34,7 @@ public class ShadowInputStream {
 
                 return resultSize;
             }
-
+        }
             //get encrypted length
             int lengthDataSize = ShadowCipher.lengthWithTagSize;
 
@@ -42,7 +42,12 @@ public class ShadowInputStream {
             byte[] encryptedLengthData = Utility.readNBytes(networkInputStream, lengthDataSize);
 
             //decrypt encrypted length to find out payload length
-            byte[] lengthData = decryptionCipher.decrypt(encryptedLengthData);
+            byte[] lengthData = new byte[0];
+            try {
+                lengthData = decryptionCipher.decrypt(encryptedLengthData);
+            } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+                e.printStackTrace();
+            }
 
             //change lengthData from BigEndian representation to in length
             byte leftByte = lengthData[0];
@@ -51,16 +56,24 @@ public class ShadowInputStream {
 
             //read and decrypt payload with the resulting length
             byte[] encryptedPayload = Utility.readNBytes(networkInputStream, payloadLength + ShadowCipher.tagSize);
-            byte[] payload = decryptionCipher.decrypt(encryptedPayload);
+            byte[] payload = new byte[0];
+            try {
+                payload = decryptionCipher.decrypt(encryptedPayload);
+            } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+                e.printStackTrace();
+            }
+            // put payload into buffer
+            buffer = Utility.plusEqualsByteArray(buffer, payload);
+        assert b != null;
+        int resultSize = Integer.min(b.length, buffer.length);
 
-            return Integer.min(b.length, buffer.length);
+            // take bytes out of buffer.
+            System.arraycopy(b, 0, buffer, resultSize + 1, buffer.length);
+        return resultSize;
         }
-        //TODO(im truly at a loss for this class)
-        return 0;
-    }
 
     // Reads the next byte of data from the input stream.
-    public int read() throws IOException, InvalidKeyException, BadPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException {
+    public int read() throws IOException {
         byte[] result = new byte[0];
         // read bytes up to payload length (4)
         read(result);

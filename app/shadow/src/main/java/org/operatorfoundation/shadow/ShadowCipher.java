@@ -23,7 +23,6 @@ import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
-//TODO(since the class requires a function of either main or the same name, where does the documentation go and should they have different or the same thing?)
 public class ShadowCipher {
     static Cipher cipher;
     static ShadowConfig config;
@@ -174,12 +173,8 @@ public class ShadowCipher {
         // encrypt the length and the payload, adding a tag to each
         byte[] encryptedLengthBytes = encrypt(lengthBytes);
         byte[] encryptedPayload = encrypt(plaintext);
-        //TODO(take even more advil because it seems java is hiding all of the ways to deal with byte arrays in the way we need)
-        byte[] combined = new byte[encryptedLengthBytes.length + encryptedPayload.length];
-        System.arraycopy(encryptedLengthBytes, 0, combined, 0, encryptedLengthBytes.length);
-        System.arraycopy(encryptedPayload, 0, combined, encryptedLengthBytes.length, encryptedPayload.length);
 
-        return combined;
+        return Utility.plusEqualsByteArray(encryptedLengthBytes, encryptedPayload);
     }
 
     // Encrypts the data and increments the nonce counter.

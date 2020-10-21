@@ -4,15 +4,14 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
-import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 
 // This abstract class is the superclass of all classes representing an output stream of bytes.
-public class ShadowOutputStream {
-    final OutputStream outputStream;
-    final ShadowCipher encryptionCipher;
+public class ShadowOutputStream extends OutputStream {
+    OutputStream outputStream;
+    ShadowCipher encryptionCipher;
     byte[] buffer = new byte[0];
 
     // An output stream accepts output bytes and sends them to some sink.
@@ -22,18 +21,17 @@ public class ShadowOutputStream {
     }
 
     // Writes the specified byte to this output stream.
-    public void write(int b) throws IOException, InvalidKeyException, BadPaddingException, InvalidAlgorithmParameterException, IllegalBlockSizeException {
+    public void write(int b) throws IOException {
         byte[] plainText = new byte[b];
-        write(plainText);
+            write(plainText);
     }
 
     // Writes b.length bytes from the specified byte array to this output stream.
-    public void write(byte[] b) throws IOException, IllegalBlockSizeException, BadPaddingException, InvalidAlgorithmParameterException, InvalidKeyException {
+    public void write(byte[] b) throws IOException {
         if (b != null && b.length > 0) {
 
             // put into buffer
-            //TODO(it wont let me use the += so this is just a placeholder)
-            buffer = b;
+            buffer = Utility.plusEqualsByteArray(buffer, b);
             int offset = 0;
             while (offset < buffer.length) {
                 int numBytesToSend = Integer.min(ShadowCipher.maxPayloadSize, buffer.length - offset);
@@ -42,7 +40,12 @@ public class ShadowOutputStream {
                 byte[] bytesToSend = new byte[numBytesToSend];
                 System.arraycopy(buffer, offset, bytesToSend, 0, numBytesToSend);
 
-                byte[] cipherText = encryptionCipher.pack(bytesToSend);
+                byte[] cipherText = new byte[0];
+                try {
+                    cipherText = encryptionCipher.pack(bytesToSend);
+                } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+                    e.printStackTrace();
+                }
                 outputStream.write(cipherText);
 
                 offset += numBytesToSend;
