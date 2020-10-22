@@ -10,8 +10,6 @@ import java.nio.channels.spi.SelectorProvider;
 import java.security.NoSuchAlgorithmException;
 import java.util.Set;
 
-import static org.operatorfoundation.shadow.ShadowCipher.config;
-
 public class ShadowSocketChannel {
 
     public boolean connectionStatus = false;
@@ -248,7 +246,7 @@ public class ShadowSocketChannel {
         SocketChannel channel = socketChannel;
         ByteBuffer result = Utility.readNBytes(channel, ShadowCipher.saltSize);
         if (result.position() == encryptionCipher.salt.length) {
-            decryptionCipher = new ShadowCipher(config, result.array());
+            decryptionCipher = new ShadowCipher(encryptionCipher.config, result.array());
         } else {
             throw new IOException();
         }

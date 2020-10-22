@@ -4,12 +4,13 @@ package org.operatorfoundation.shadow;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-class ShadowSocketTest {
+public class ShadowSocketTest {
 
     @Test
     public void shadowSocketInitTest() throws IOException, NoSuchAlgorithmException {
@@ -33,9 +34,17 @@ class ShadowSocketTest {
 
     @Test
     public void shadowSocketReadTest() throws IOException, NoSuchAlgorithmException {
+
         String password = "1234";
         ShadowConfig config = new ShadowConfig(password, "AES-128-GCM");
         ShadowSocket shadowSocket = new ShadowSocket(config, "127.0.0.1", 2222);
         assertNotNull (shadowSocket);
+        String plaintext = "Hi";
+        byte[] textBytes = plaintext.getBytes();
+        shadowSocket.getOutputStream().write(textBytes);
+        shadowSocket.getOutputStream();
+        byte[] buffer = new byte[2];
+        shadowSocket.getInputStream().read(buffer);
+        assertEquals ("Yo", Arrays.toString(buffer));
     }
 }

@@ -24,20 +24,47 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 public class ShadowCipher {
-    static Cipher cipher;
-    static ShadowConfig config;
-    static SecretKey key;
-    static int counter = 0;
-    static byte[] salt;
+    static int saltSize = 16;
     static int lengthWithTagSize = 2 + 16;
     static int tagSizeBits = 16 * 8;
     static int tagSize = 16;
     static int maxPayloadSize = 16417;
-    //TODO(Could i set the saltSize static variable in a switch loop)
-    static int saltSize = 16;
+
+    byte[] salt;
+    Cipher cipher;
+    ShadowConfig config;
+    SecretKey key;
+    int counter = 0;
+
 
     // ShadowCipher contains the encryption and decryption methods.
     public ShadowCipher(ShadowConfig config, byte[] salt) throws NoSuchAlgorithmException {
+        this.salt = salt;
+        this.config = config;
+        key = createSecretKey(config, salt);
+        switch (config.cipherMode) {
+            case AES_128_GCM: {
+                try {
+                    cipher = Cipher.getInstance("AES_128/GCM/NoPadding");
+                } catch (NoSuchPaddingException e) {
+                    e.printStackTrace();
+                }
+            }
+            case AES_256_GCM:
+                try {
+                    cipher = Cipher.getInstance("AES_256/GCM/NoPadding");
+                } catch (NoSuchPaddingException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case CHACHA20_IETF_POLY1305:
+                try {
+                    cipher = Cipher.getInstance("CHACHA20_IETF/POLY1305/NoPadding");
+                } catch (NoSuchPaddingException e) {
+                    e.printStackTrace();
+                }
+                break;
+        }
     }
 
     //TODO(JAVA DOESNT HAVE COMPANION OBJECTSSSSSS!!!!!!)
@@ -76,9 +103,10 @@ public class ShadowCipher {
 
     // Derives the pre-shared key from the config.
     public byte[] kdf(ShadowConfig config) throws NoSuchAlgorithmException {
-        byte[] buffer = new byte[0];
-        byte[] prev = new byte[0];
         MessageDigest hash = MessageDigest.getInstance("MD5");
+        int hashLength = hash.getDigestLength();
+        byte[] buffer = new byte[hashLength];
+        byte[] prev = new byte[hashLength];
         int keylen = 0;
         switch (config.cipherMode) {
             case AES_128_GCM: {
@@ -96,13 +124,14 @@ public class ShadowCipher {
             hash.update(prev);
             hash.update(config.password.getBytes());
             //TODO(take advil for the headaches i've gotten from java not having sliceArray or += for byteArrays)
-            System.arraycopy(hash.digest(), 0, buffer, 0, hash.getDigestLength());
+
+            System.arraycopy(hash.digest(), 0, buffer, 0, hashLength);
             int index = buffer.length - hash.getDigestLength();
             prev = Arrays.copyOfRange(buffer, index, buffer.length);
             hash.reset();
         }
 
-        return Arrays.copyOfRange(buffer, 0, keylen - 1);
+        return Arrays.copyOfRange(buffer, 0, keylen);
     }
 
     // Creates a byteArray of a specified length containing random bytes.
@@ -125,35 +154,6 @@ public class ShadowCipher {
         Random random = new Random();
         random.nextBytes(salt);
         return salt;
-    }
-
-
-    // Init block:
-    {
-        key = createSecretKey(config, salt);
-        switch (config.cipherMode) {
-            case AES_128_GCM: {
-                try {
-                    cipher = Cipher.getInstance("AES_128/GCM/NoPadding");
-                } catch (NoSuchPaddingException e) {
-                    e.printStackTrace();
-                }
-            }
-            case AES_256_GCM:
-                try {
-                    cipher = Cipher.getInstance("AES_256/GCM/NoPadding");
-                } catch (NoSuchPaddingException e) {
-                    e.printStackTrace();
-                }
-                break;
-            case CHACHA20_IETF_POLY1305:
-                try {
-                    cipher = Cipher.getInstance("CHACHA20_IETF/POLY1305/NoPadding");
-                } catch (NoSuchPaddingException e) {
-                    e.printStackTrace();
-                }
-                break;
-        }
     }
 
     // [encrypted payload length][length tag] + [encrypted payload][payload tag]
