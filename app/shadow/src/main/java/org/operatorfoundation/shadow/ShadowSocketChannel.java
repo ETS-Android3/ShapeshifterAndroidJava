@@ -7,8 +7,14 @@ import java.net.SocketOption;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.nio.channels.spi.SelectorProvider;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Set;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
 
 public class ShadowSocketChannel {
 
@@ -98,70 +104,67 @@ public class ShadowSocketChannel {
 
             @Override
             public int read(ByteBuffer dst) throws IOException {
-//                byte[] buffer = new byte[0];
-//                byte[] data = new byte[(dst.capacity())];
-//                if (data.length == 0) {
-//                    return 0;
-//                }
-//
-//                // puts bytes in a buffer.
-//                //TODO(needs to do the thing but in java)
-//                if (data.length <= buffer.length) {
-//                    int resultSize = Integer.min(data.length, buffer.length);
-//                    buffer.copyInto(data, 0, 0, resultSize);
-//                    buffer.sliceArray(resultSize + 1, buffer.length - 1);
-//
-//                    return resultSize;
-//                }
-//
-//                // get encrypted length.
-//                int lengthDataSize = ShadowCipher.lengthWithTagSize;
-//
-//                // read bytes up to the size of encrypted lengthSize into a byte buffer.
-//                ByteBuffer encryptedLengthData = Utility.readNBytes(socketChannel, lengthDataSize);
-//
-//                // decrypt encrypted length to find out payload length.
-//                byte[] lengthData = new byte[0];
-//                try {
-//                    lengthData = decryptionCipher.decrypt(new byte[encryptedLengthData.capacity()]);
-//                } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
-//                    e.printStackTrace();
-//                }
-//
-//                // change lengthData from  BigEndian representation to int length.
-//                byte leftByte = lengthData[0];
-//                byte rightByte = lengthData[1];
-//                int payloadLength = ((int)leftByte * 256) + (int)rightByte;
-//
-//                // read and decrypt payload with the resulting length.
-//                ByteBuffer encryptedPayload = Utility.readNBytes(socketChannel, payloadLength + ShadowCipher.tagSize);
-//                byte[] payload = new byte[0];
-//                try {
-//                    payload = decryptionCipher.decrypt(new byte[encryptedPayload.capacity()]);
-//                } catch (InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
-//                    e.printStackTrace();
-//                }
-//
-//                // put payload into buffer
-//                //TODO(more byte array witchcraft that i cant find a java equivalent for)
-//                buffer = buffer + payload;
-//                int resultSize = Integer.min(data.length, buffer.length);
-//                buffer.copyInto(data, 0, 0, resultSize);
-//
-//                // take bytes out of buffer
-//                buffer.sliceArray(resultSize + 1, buffer.length - 1);
-//
-//                return resultSize;
-                return 0;
+                byte[] buffer = new byte[0];
+                byte[] data = new byte[(dst.capacity())];
+                if (data.length == 0) {
+                    return 0;
+                }
+
+                // puts bytes in a buffer.
+                if (data.length <= buffer.length) {
+                    int resultSize = Integer.min(data.length, buffer.length);
+                    System.arraycopy(buffer, 0, data, 0, resultSize);
+                    //TODO(not sure if this is correct)
+                    buffer = Arrays.copyOfRange(buffer, resultSize + 1, buffer.length - 1);
+
+                    return resultSize;
+                }
+
+                // get encrypted length.
+                int lengthDataSize = ShadowCipher.lengthWithTagSize;
+
+                // read bytes up to the size of encrypted lengthSize into a byte buffer.
+                ByteBuffer encryptedLengthData = Utility.readNBytes(socketChannel, lengthDataSize);
+
+                // decrypt encrypted length to find out payload length.
+                byte[] lengthData = new byte[0];
+                try {
+                    lengthData = decryptionCipher.decrypt(new byte[encryptedLengthData.capacity()]);
+                } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+                    e.printStackTrace();
+                }
+
+                // change lengthData from  BigEndian representation to int length.
+                byte leftByte = lengthData[0];
+                byte rightByte = lengthData[1];
+                int payloadLength = ((int)leftByte * 256) + (int)rightByte;
+
+                // read and decrypt payload with the resulting length.
+                ByteBuffer encryptedPayload = Utility.readNBytes(socketChannel, payloadLength + ShadowCipher.tagSize);
+                byte[] payload = new byte[0];
+                try {
+                    payload = decryptionCipher.decrypt(new byte[encryptedPayload.capacity()]);
+                } catch (InvalidAlgorithmParameterException | IllegalBlockSizeException | BadPaddingException | InvalidKeyException e) {
+                    e.printStackTrace();
+                }
+
+                // put payload into buffer
+                buffer = Utility.plusEqualsByteArray(buffer, payload);
+                int resultSize = Integer.min(data.length, buffer.length);
+
+                // take bytes out of buffer
+                //TODO(dont think this is right)
+                System.arraycopy(buffer, 0, buffer, resultSize + 1, buffer.length);
+
+                return resultSize;
             }
 
             @Override
             public long read(ByteBuffer[] dsts, int offset, int length) throws IOException {
                 //TODO(there's a lot of stuff in the kotlin version that java just dont do)
-//                dsts?.get(offset)?.remaining()
-//                dsts?.get(offset + 1)?.remaining()
-//                val remaining = dsts?.get(offset + length - 1)?.remaining()
-//                return remaining!!.toLong()
+//                dsts.get(offset).remaining();
+//                dsts.get(offset + 1).remaining();
+//                return dsts.get(offset + length - 1).remaining();
                 return 0;
             }
 
@@ -200,22 +203,26 @@ public class ShadowSocketChannel {
                 }
 
                 // put into buffer.
-                //TODO(+= and byte arrays is illegal in java?)
-                //buffer = buffer + data;
+                buffer = Utility.plusEqualsByteArray(buffer, data);
 
                 // keep writing until the buffer is empty in case user exceeds maximum.
                 while (buffer.length > 0) {
                     int numBytesToSend = Integer.min(ShadowCipher.maxPayloadSize, buffer.length);
 
-                    // make a copy of the buffer
-                    //byte[] bytesToSend = buffer.copyOfRange(0, numBytesToSend);
+                     //make a copy of the buffer
+                    byte[] bytesToSend = new byte[numBytesToSend];
 
-                    // take bytes out of buffer.
-                    //buffer = buffer.sliceArray(numBytesToSend, buffer.length - 1);
+                     //take bytes out of buffer.
+                    System.arraycopy(buffer, 0, bytesToSend, 0, numBytesToSend);
 
-                    //byte[] cipherText = encryptionCipher.pack(bytesToSend);
+                    byte[] cipherText = new byte[0];
+                    try {
+                        cipherText = encryptionCipher.pack(bytesToSend);
+                    } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+                        e.printStackTrace();
+                    }
 
-                    //socketChannel.write(ByteBuffer.wrap(cipherText));
+                    socketChannel.write(ByteBuffer.wrap(cipherText));
                 }
                 return src.remaining();
             }
@@ -223,10 +230,9 @@ public class ShadowSocketChannel {
             @Override
             public long write(ByteBuffer[] srcs, int offset, int length) throws IOException {
                 //TODO(moar byte array witchcraft)
-//                srcs?.get(offset)?.remaining()
-//                srcs?.get(offset + 1)?.remaining()
-//                val remaining = srcs?.get(offset + length - 1)?.remaining()
-//                return remaining!!.toLong()
+//                srcs.get(offset).remaining();
+//                srcs.get(offset + 1).remaining();
+//                return srcs.get(offset + length - 1).remaining();
                 return 0;
             }
         };

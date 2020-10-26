@@ -23,7 +23,7 @@ public class ShadowOutputStream extends OutputStream {
     // Writes the specified byte to this output stream.
     public void write(int b) throws IOException {
         byte[] plainText = new byte[b];
-            write(plainText);
+        write(plainText);
     }
 
     // Writes b.length bytes from the specified byte array to this output stream.

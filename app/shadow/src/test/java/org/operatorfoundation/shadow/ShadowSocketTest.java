@@ -22,6 +22,9 @@ public class ShadowSocketTest {
 
     @Test
     public void shadowSocketWriteTest() throws IOException, NoSuchAlgorithmException {
+        TestServer myRunnable = new TestServer();
+        Thread thread = new Thread(myRunnable);
+        thread.start();
         String password = "1234";
         ShadowConfig config = new ShadowConfig(password, "AES-128-GCM");
         ShadowSocket shadowSocket = new ShadowSocket(config, "127.0.0.1", 2222);
@@ -34,7 +37,9 @@ public class ShadowSocketTest {
 
     @Test
     public void shadowSocketReadTest() throws IOException, NoSuchAlgorithmException {
-
+        TestServer myRunnable = new TestServer();
+        Thread thread = new Thread(myRunnable);
+        thread.start();
         String password = "1234";
         ShadowConfig config = new ShadowConfig(password, "AES-128-GCM");
         ShadowSocket shadowSocket = new ShadowSocket(config, "127.0.0.1", 2222);

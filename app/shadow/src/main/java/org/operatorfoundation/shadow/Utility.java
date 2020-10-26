@@ -2,7 +2,6 @@ package org.operatorfoundation.shadow;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
