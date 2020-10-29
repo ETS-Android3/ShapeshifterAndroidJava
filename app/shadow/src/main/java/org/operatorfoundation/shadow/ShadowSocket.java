@@ -262,7 +262,6 @@ public class ShadowSocket {
 
     // Sends the salt through the output stream.
     private void sendSalt() throws IOException {
-        //TODO(that may need to be encryptioncipher.salt)
         socket.getOutputStream().write(encryptionCipher.salt);
     }
 

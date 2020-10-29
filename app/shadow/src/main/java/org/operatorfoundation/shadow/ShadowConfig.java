@@ -14,18 +14,18 @@ public class ShadowConfig {
             CipherMode maybeMode = null;
             try {
                 switch (cipherName) {
-                    case "AES-128-GCM": {
+                    case "AES-128-GCM":
                         maybeMode = CipherMode.AES_128_GCM;
                         break;
-                    }
-                    case "AES-256-GCM": {
+
+                    case "AES-256-GCM":
                         maybeMode = CipherMode.AES_256_GCM;
                         break;
-                    }
-                    case "CHACHA-IETF-POLY1305": {
+
+                    case "CHACHA-IETF-POLY1305":
                         maybeMode = CipherMode.CHACHA20_IETF_POLY1305;
                         break;
-                    }
+
                 }
             } catch (IllegalArgumentException error) {
                 System.out.println("invalid cipherMode in the config:");

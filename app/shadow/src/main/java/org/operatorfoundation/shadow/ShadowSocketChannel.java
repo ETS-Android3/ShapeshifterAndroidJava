@@ -114,7 +114,6 @@ public class ShadowSocketChannel {
                 if (data.length <= buffer.length) {
                     int resultSize = Integer.min(data.length, buffer.length);
                     System.arraycopy(buffer, 0, data, 0, resultSize);
-                    //TODO(not sure if this is correct)
                     buffer = Arrays.copyOfRange(buffer, resultSize + 1, buffer.length - 1);
 
                     return resultSize;
@@ -153,7 +152,6 @@ public class ShadowSocketChannel {
                 int resultSize = Integer.min(data.length, buffer.length);
 
                 // take bytes out of buffer
-                //TODO(dont think this is right)
                 System.arraycopy(buffer, 0, buffer, resultSize + 1, buffer.length);
 
                 return resultSize;
@@ -161,7 +159,6 @@ public class ShadowSocketChannel {
 
             @Override
             public long read(ByteBuffer[] dsts, int offset, int length) throws IOException {
-                //TODO(there's a lot of stuff in the kotlin version that java just dont do)
 //                dsts.get(offset).remaining();
 //                dsts.get(offset + 1).remaining();
 //                return dsts.get(offset + length - 1).remaining();
@@ -190,7 +187,6 @@ public class ShadowSocketChannel {
 
             @Override
             public Set<SocketOption<?>> supportedOptions() {
-                //TODO(dont have muteableSetOf in java)
                 return null;
             }
 
@@ -229,7 +225,6 @@ public class ShadowSocketChannel {
 
             @Override
             public long write(ByteBuffer[] srcs, int offset, int length) throws IOException {
-                //TODO(moar byte array witchcraft)
 //                srcs.get(offset).remaining();
 //                srcs.get(offset + 1).remaining();
 //                return srcs.get(offset + length - 1).remaining();

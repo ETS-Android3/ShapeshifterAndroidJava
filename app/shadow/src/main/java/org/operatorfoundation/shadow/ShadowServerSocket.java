@@ -61,7 +61,6 @@ public class ShadowServerSocket {
     }
 
     // Returns the unique ServerSocketChannel object associated with this socket, if any.
-    //TODO(similar to socket, the values aren't preset in serverSocket)
     public ServerSocketChannel getChannel() {
         return serverSocket.getChannel();
     }

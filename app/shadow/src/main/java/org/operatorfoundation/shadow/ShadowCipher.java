@@ -36,7 +36,6 @@ public class ShadowCipher {
     SecretKey key;
     int counter = 0;
 
-
     // ShadowCipher contains the encryption and decryption methods.
     public ShadowCipher(ShadowConfig config, byte[] salt) throws NoSuchAlgorithmException {
         this.salt = salt;
@@ -48,7 +47,6 @@ public class ShadowCipher {
                     cipher = Cipher.getInstance("AES_128/GCM/NoPadding");
                 } catch (NoSuchPaddingException e) {
                     e.printStackTrace();
-
                 }
                 break;
             case AES_256_GCM:
@@ -68,8 +66,6 @@ public class ShadowCipher {
         }
     }
 
-    //TODO(JAVA DOESNT HAVE COMPANION OBJECTSSSSSS!!!!!!)
-
     // Create a secret key using the two key derivation functions.
     public SecretKey createSecretKey(ShadowConfig config, byte[] salt) throws NoSuchAlgorithmException {
         byte[] presharedKey = kdf(config);
@@ -88,14 +84,15 @@ public class ShadowCipher {
         String keyAlgorithm = null;
         switch (config.cipherMode) {
             case AES_128_GCM:
-            case AES_256_GCM: {
+
+            case AES_256_GCM:
                 keyAlgorithm = "AES";
                 break;
-            }
-            case CHACHA20_IETF_POLY1305: {
+
+            case CHACHA20_IETF_POLY1305:
                 keyAlgorithm = "ChaCha20";
                 break;
-            }
+
             default:
                 throw new IllegalStateException("Unexpected or unsupported Algorithm value: " + keyAlgorithm);
         }
@@ -115,8 +112,6 @@ public class ShadowCipher {
                 break;
 
             case AES_256_GCM:
-                keylen = 32;
-                break;
 
             case CHACHA20_IETF_POLY1305:
                 keylen = 32;
@@ -139,15 +134,15 @@ public class ShadowCipher {
     public static byte[] createSalt(ShadowConfig config) {
         int saltSize;
         switch (config.cipherMode) {
-            case AES_128_GCM: {
+            case AES_128_GCM:
                 saltSize = 16;
                 break;
-            }
+
             case AES_256_GCM:
-            case CHACHA20_IETF_POLY1305: {
+            case CHACHA20_IETF_POLY1305:
                 saltSize = 32;
                 break;
-            }
+
             default:
                 throw new IllegalStateException("Unexpected value: " + config.cipherMode);
         }
@@ -185,14 +180,14 @@ public class ShadowCipher {
         AlgorithmParameterSpec ivSpec;
         switch (config.cipherMode) {
             case AES_128_GCM:
-            case AES_256_GCM: {
+            case AES_256_GCM:
                 ivSpec = new GCMParameterSpec(tagSizeBits, nonceBytes);
                 break;
-            }
-            case CHACHA20_IETF_POLY1305: {
+
+            case CHACHA20_IETF_POLY1305:
                 ivSpec = new IvParameterSpec(nonceBytes);
                 break;
-            }
+
             default:
                 throw new IllegalStateException();
         }
@@ -211,14 +206,14 @@ public class ShadowCipher {
         AlgorithmParameterSpec ivSpec;
         switch (config.cipherMode) {
             case AES_128_GCM:
-            case AES_256_GCM: {
+            case AES_256_GCM:
                 ivSpec = new GCMParameterSpec(tagSizeBits, nonceBytes);
                 break;
-            }
-            case CHACHA20_IETF_POLY1305: {
+
+            case CHACHA20_IETF_POLY1305:
                 ivSpec = new IvParameterSpec(nonceBytes);
                 break;
-            }
+
             default:
                 throw new IllegalStateException();
         }
