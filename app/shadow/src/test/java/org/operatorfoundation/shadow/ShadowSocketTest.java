@@ -50,6 +50,6 @@ public class ShadowSocketTest {
         shadowSocket.getOutputStream().flush();
         byte[] buffer = new byte[2];
         shadowSocket.getInputStream().read(buffer);
-        assertEquals("Yo", Arrays.toString(buffer));
+        assertEquals("Yo", new String(buffer));
     }
 }

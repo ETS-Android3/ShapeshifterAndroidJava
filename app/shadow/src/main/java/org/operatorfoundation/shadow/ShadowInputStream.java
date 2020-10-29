@@ -68,7 +68,8 @@ public class ShadowInputStream extends InputStream {
         int resultSize = Integer.min(b.length, buffer.length);
 
         // take bytes out of buffer.
-        System.arraycopy(b, 0, buffer, resultSize + 1, buffer.length);
+        System.arraycopy(buffer, 0, b, 0, buffer.length);
+
         return resultSize;
     }
 

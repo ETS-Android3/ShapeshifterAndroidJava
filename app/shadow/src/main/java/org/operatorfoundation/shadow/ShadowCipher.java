@@ -105,28 +105,28 @@ public class ShadowCipher {
     // Derives the pre-shared key from the config.
     public byte[] kdf(ShadowConfig config) throws NoSuchAlgorithmException {
         MessageDigest hash = MessageDigest.getInstance("MD5");
-        int hashLength = hash.getDigestLength();
-        byte[] buffer = new byte[hashLength];
-        byte[] prev = new byte[hashLength];
+        byte[] buffer = new byte[0];
+        byte[] prev = new byte[0];
+
         int keylen = 0;
         switch (config.cipherMode) {
-            case AES_128_GCM: {
+            case AES_128_GCM:
                 keylen = 16;
                 break;
-            }
-            case CHACHA20_IETF_POLY1305:
-            case AES_256_GCM: {
+
+            case AES_256_GCM:
                 keylen = 32;
                 break;
-            }
+
+            case CHACHA20_IETF_POLY1305:
+                keylen = 32;
+                break;
         }
 
         while (buffer.length < keylen) {
             hash.update(prev);
             hash.update(config.password.getBytes());
-            //TODO(take advil for the headaches i've gotten from java not having sliceArray or += for byteArrays)
-
-            System.arraycopy(hash.digest(), 0, buffer, 0, hashLength);
+            buffer = Utility.plusEqualsByteArray(buffer, hash.digest());
             int index = buffer.length - hash.getDigestLength();
             prev = Arrays.copyOfRange(buffer, index, buffer.length);
             hash.reset();
@@ -164,6 +164,7 @@ public class ShadowCipher {
         int plaintextLength = plaintext.length;
 
         // turn the length into two shorts and put them into an array
+        // this is encoded in big endian
         short shortPlaintextLength = (short) plaintextLength;
         short leftShort = (short) (shortPlaintextLength / 256);
         short rightShort = (short) (shortPlaintextLength % 256);
@@ -196,11 +197,12 @@ public class ShadowCipher {
                 throw new IllegalStateException();
         }
         cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+        byte[] encrypted = cipher.doFinal(plaintext);
 
         // increment counter every time nonce is used (encrypt/decrypt)
         counter += 1;
 
-        return cipher.doFinal(plaintext);
+        return encrypted;
     }
 
     // Decrypts data and increments the nonce counter.
