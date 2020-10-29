@@ -17,7 +17,7 @@ public class ShadowSocketTest {
         String password = "1234";
         ShadowConfig config = new ShadowConfig(password, "AES-128-GCM");
         ShadowSocket shadowSocket = new ShadowSocket(config, "127.0.0.1", 2222);
-        assertNotNull (shadowSocket);
+        assertNotNull(shadowSocket);
     }
 
     @Test
@@ -28,11 +28,11 @@ public class ShadowSocketTest {
         String password = "1234";
         ShadowConfig config = new ShadowConfig(password, "AES-128-GCM");
         ShadowSocket shadowSocket = new ShadowSocket(config, "127.0.0.1", 2222);
-        assertNotNull (shadowSocket);
+        assertNotNull(shadowSocket);
         String plaintext = "Hi";
         byte[] textBytes = plaintext.getBytes();
         shadowSocket.getOutputStream().write(textBytes);
-        shadowSocket.getOutputStream();
+        shadowSocket.getOutputStream().flush();
     }
 
     @Test
@@ -43,13 +43,13 @@ public class ShadowSocketTest {
         String password = "1234";
         ShadowConfig config = new ShadowConfig(password, "AES-128-GCM");
         ShadowSocket shadowSocket = new ShadowSocket(config, "127.0.0.1", 2222);
-        assertNotNull (shadowSocket);
+        assertNotNull(shadowSocket);
         String plaintext = "Hi";
         byte[] textBytes = plaintext.getBytes();
         shadowSocket.getOutputStream().write(textBytes);
-        shadowSocket.getOutputStream();
+        shadowSocket.getOutputStream().flush();
         byte[] buffer = new byte[2];
         shadowSocket.getInputStream().read(buffer);
-        assertEquals ("Yo", Arrays.toString(buffer));
+        assertEquals("Yo", Arrays.toString(buffer));
     }
 }

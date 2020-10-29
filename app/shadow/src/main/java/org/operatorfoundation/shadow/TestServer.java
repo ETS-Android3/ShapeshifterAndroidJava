@@ -18,6 +18,7 @@ class TestServer implements Runnable {
             Socket socket = testServer.accept();
             readNBytes(socket.getInputStream(), 2);
             socket.getOutputStream().write("Yo".getBytes());
+            socket.getOutputStream().flush();
         } catch (IOException e) {
             e.printStackTrace();
         }

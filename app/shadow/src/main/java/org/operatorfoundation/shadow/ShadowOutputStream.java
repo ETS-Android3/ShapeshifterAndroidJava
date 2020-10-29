@@ -47,6 +47,7 @@ public class ShadowOutputStream extends OutputStream {
                     e.printStackTrace();
                 }
                 outputStream.write(cipherText);
+                outputStream.flush();
 
                 offset += numBytesToSend;
             }

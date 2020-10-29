@@ -43,13 +43,14 @@ public class ShadowCipher {
         this.config = config;
         key = createSecretKey(config, salt);
         switch (config.cipherMode) {
-            case AES_128_GCM: {
+            case AES_128_GCM:
                 try {
                     cipher = Cipher.getInstance("AES_128/GCM/NoPadding");
                 } catch (NoSuchPaddingException e) {
                     e.printStackTrace();
+
                 }
-            }
+                break;
             case AES_256_GCM:
                 try {
                     cipher = Cipher.getInstance("AES_256/GCM/NoPadding");
