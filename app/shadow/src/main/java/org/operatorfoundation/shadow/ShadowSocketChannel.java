@@ -32,10 +32,8 @@ public class ShadowSocketChannel {
         return new SocketChannel(selectorProvider) {
             // Init block:
             {
-                // Create salt for encryptionCipher
-                byte[] salt = ShadowCipher.createSalt(config);
                 // Create an encryptionCipher
-                encryptionCipher = new ShadowCipher(config, salt);
+                encryptionCipher = ShadowCipher.makeShadowCipher(config);
             }
 
             @Override
@@ -245,9 +243,10 @@ public class ShadowSocketChannel {
 
     public void receiveSalt() throws IOException, NoSuchAlgorithmException {
         SocketChannel channel = socketChannel;
-        ByteBuffer result = Utility.readNBytes(channel, ShadowCipher.saltSize);
+        int saltSize = ShadowCipher.determineSaltSize(encryptionCipher.config);
+        ByteBuffer result = Utility.readNBytes(channel, saltSize);
         if (result.position() == encryptionCipher.salt.length) {
-            decryptionCipher = new ShadowCipher(encryptionCipher.config, result.array());
+            decryptionCipher = ShadowCipher.makeShadowCipherWithSalt(encryptionCipher.config, result.array());
         } else {
             throw new IOException();
         }

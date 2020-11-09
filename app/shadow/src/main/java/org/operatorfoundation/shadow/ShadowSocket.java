@@ -17,10 +17,10 @@ import javax.crypto.NoSuchPaddingException;
 // This class implements client sockets (also called just "sockets").
 public class ShadowSocket {
     // Fields:
-    static Socket socket = new Socket();
-    static ShadowCipher encryptionCipher;
-    static ShadowCipher decryptionCipher;
-    static Boolean connectionStatus;
+    Socket socket = new Socket();
+    ShadowCipher encryptionCipher;
+    ShadowCipher decryptionCipher;
+    Boolean connectionStatus;
     private final ShadowConfig config;
 
     public ShadowSocket(ShadowConfig config) throws NoSuchAlgorithmException {
@@ -28,7 +28,7 @@ public class ShadowSocket {
         // Create salt for encryptionCipher
         byte[] salt = ShadowCipher.createSalt(config);
         // Create an encryptionCipher
-        encryptionCipher = new ShadowCipher(config, salt);
+        encryptionCipher = ShadowCipher.makeShadowCipherWithSalt(config, salt);
     }
 
     // Constructors:
@@ -267,9 +267,10 @@ public class ShadowSocket {
 
     // Receives the salt through the input stream.
     private void receiveSalt() throws NoSuchAlgorithmException, IOException {
-        byte[] result = Utility.readNBytes(socket.getInputStream(), ShadowCipher.saltSize);
+        int saltSize = ShadowCipher.determineSaltSize(encryptionCipher.config);
+        byte[] result = Utility.readNBytes(socket.getInputStream(), saltSize);
         if (result.length == encryptionCipher.salt.length) {
-            decryptionCipher = new ShadowCipher(config, result);
+            decryptionCipher = ShadowCipher.makeShadowCipherWithSalt(config, result);
         } else {
             throw new IOException();
         }
