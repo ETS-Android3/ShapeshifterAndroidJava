@@ -1,12 +1,8 @@
 package org.operatorfoundation.shapeshifter.shadow.java;
 
-import org.bouncycastle.crypto.CipherParameters;
 import org.bouncycastle.crypto.digests.SHA1Digest;
 import org.bouncycastle.crypto.generators.HKDFBytesGenerator;
 import org.bouncycastle.crypto.params.HKDFParameters;
-import org.bouncycastle.crypto.params.ParametersWithID;
-import org.bouncycastle.crypto.params.ParametersWithIV;
-import org.bouncycastle.jcajce.spec.AEADParameterSpec;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.security.InvalidAlgorithmParameterException;
@@ -14,7 +10,6 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.Security;
-import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
@@ -22,19 +17,26 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+
+import org.libsodium.jni.NaCl;
+import org.libsodium.jni.Sodium;
+import org.libsodium.jni.SodiumConstants;
 
 public class ShadowChaChaCipher extends ShadowCipher {
 
     public ShadowChaChaCipher(ShadowConfig config) throws NoSuchAlgorithmException {
+
         // Create salt for encryptionCipher
         this(config, ShadowChaChaCipher.createSalt(config));
     }
 
     // ShadowCipher contains the encryption and decryption methods.
     public ShadowChaChaCipher(ShadowConfig config, byte[] salt) throws NoSuchAlgorithmException {
+
+        // required to load the native C library
+        NaCl.sodium();
+
         this.config = config;
         this.salt = salt;
 
@@ -119,40 +121,94 @@ public class ShadowChaChaCipher extends ShadowCipher {
         return Utility.plusEqualsByteArray(encryptedLengthBytes, encryptedPayload);
     }
 
-    // Encrypts the data and increments the nonce counter.
-    byte[] encrypt(byte[] plaintext) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
-        byte[] nonceBytes = nonce();
-        AlgorithmParameterSpec ivSpec;
-        if (config.cipherMode == CipherMode.CHACHA20_IETF_POLY1305) {
-            ivSpec = new AEADParameterSpec(nonceBytes, 128);
-        } else {
-            throw new IllegalStateException();
-        }
+//    // Encrypts the data and increments the nonce counter.
+//    byte[] encrypt(byte[] plaintext) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+//
+//        byte[] nonceBytes = nonce();
+//        AlgorithmParameterSpec ivSpec;
+//        if (config.cipherMode == CipherMode.CHACHA20_IETF_POLY1305) {
+//            ivSpec = new AEADParameterSpec(nonceBytes, 128);
+//        } else {
+//            throw new IllegalStateException();
+//        }
+//
+//        cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
+//        byte[] encrypted = cipher.doFinal(plaintext);
+//
+//        // increment counter every time nonce is used (encrypt/decrypt)
+//        counter += 1;
+//
+//        return encrypted;
+//    }
 
-        cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
-        byte[] encrypted = cipher.doFinal(plaintext);
+    // Encrypts the data and increments the nonce counter.
+    @Override
+    byte[] encrypt(byte[] plaintext) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+        // cipherText should be at least crypto_box_MACBYTES + messageBytes.length bytes long
+        byte[] cipherText = new byte[Sodium.crypto_box_macbytes() + plaintext.length];
+        byte[] nonceBytes = nonce();
+
+        //This function writes the authentication tag, whose length is crypto_box_MACBYTES bytes, in cipherText,
+        // immediately followed by the encrypted message, whose length is the same as the messageBytes
+        Sodium.crypto_secretbox_easy(
+                cipherText,
+                plaintext,
+                plaintext.length,
+                nonceBytes,
+                key.getEncoded());
+
+        // Return nonce + cipher text
+        byte[] fullMessage = new byte[SodiumConstants.NONCE_BYTES + cipherText.length];
+        System.arraycopy(nonceBytes, 0, fullMessage, 0, nonceBytes.length);
+        System.arraycopy(cipherText, 0, fullMessage, nonceBytes.length, cipherText.length);
 
         // increment counter every time nonce is used (encrypt/decrypt)
         counter += 1;
 
-        return encrypted;
+        return fullMessage;
     }
 
     // Decrypts data and increments the nonce counter.
+    @Override
     public byte[] decrypt(byte[] encrypted) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
-        byte[] nonceBytes = nonce();
-        AlgorithmParameterSpec ivSpec;
-        if (config.cipherMode == CipherMode.CHACHA20_IETF_POLY1305) {
-            ivSpec = new AEADParameterSpec(nonceBytes, 128);
-        } else {
-            throw new IllegalStateException();
-        }
-        cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+        // Get the nonce from the encrypted bytes
+        byte[] nonce = new byte[SodiumConstants.NONCE_BYTES];
+        System.arraycopy(encrypted, 0, nonce, 0, nonce.length);
+
+        // get the cipher text from the encrypted bytes
+        byte[] cipherText = new byte[encrypted.length - nonce.length];
+        System.arraycopy(encrypted, nonce.length, cipherText, 0, cipherText.length);
+
+        // container for the decrypt results
+        byte[] decryptedMessageBytes = new byte[(int) (cipherText.length - Sodium.crypto_box_macbytes())];
+
+        Sodium.crypto_secretbox_open_easy(
+                decryptedMessageBytes,
+                cipherText,
+                cipherText.length,
+                nonce,
+                key.getEncoded());
 
         //increment counter every time nonce is used (encrypt/decrypt)
         counter += 1;
 
-        return cipher.doFinal(encrypted);
+        return decryptedMessageBytes;
     }
+
+//    public byte[] decrypt(byte[] encrypted) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+//        byte[] nonceBytes = nonce();
+//        AlgorithmParameterSpec ivSpec;
+//        if (config.cipherMode == CipherMode.CHACHA20_IETF_POLY1305) {
+//            ivSpec = new AEADParameterSpec(nonceBytes, 128);
+//        } else {
+//            throw new IllegalStateException();
+//        }
+//        cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
+//
+//        //increment counter every time nonce is used (encrypt/decrypt)
+//        counter += 1;
+//
+//        return cipher.doFinal(encrypted);
+//    }
 
 }
