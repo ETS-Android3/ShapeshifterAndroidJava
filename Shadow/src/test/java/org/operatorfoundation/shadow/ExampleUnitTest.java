@@ -9,6 +9,7 @@ import org.operatorfoundation.shapeshifter.shadow.java.ShadowSocket;
 import org.operatorfoundation.shapeshifter.shadow.java.TestServer;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -168,6 +169,24 @@ public class ExampleUnitTest {
         byte[] buffer = new byte[2];
         shadowSocket.getInputStream().read(buffer);
         assertEquals("Yo", new String(buffer));
+    }
+
+    @Test
+    public void shadowSocketDemoServerTest() throws IOException, NoSuchAlgorithmException {
+//        TestServer myRunnable = new TestServer();
+//        Thread thread = new Thread(myRunnable);
+//        thread.start();
+        ShadowConfig config = new ShadowConfig("1234", "AES-128-GCM");
+        ShadowSocket shadowSocket = new ShadowSocket(config, "159.203.158.90", 2346);
+        assertNotNull(shadowSocket);
+        String httpRequest = "GET / HTTP/1.0\r\n\r\n";
+        byte[] textBytes = httpRequest.getBytes();
+        shadowSocket.getOutputStream().write(textBytes);
+        shadowSocket.getOutputStream().flush();
+        byte[] buffer = new byte[244];
+        shadowSocket.getInputStream().read(buffer);
+        System.out.println(new String(buffer));
+        //assertEquals("Yo", new String(buffer));
     }
 
     @Test
