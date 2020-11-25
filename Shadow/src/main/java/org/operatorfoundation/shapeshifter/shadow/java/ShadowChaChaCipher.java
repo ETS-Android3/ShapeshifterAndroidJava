@@ -43,6 +43,7 @@ public class ShadowChaChaCipher extends ShadowCipher {
         key = createSecretKey(config, salt);
         if (config.cipherMode == CipherMode.CHACHA20_IETF_POLY1305) {
             try {
+                //TODO(Need to get the libsodium provider)
                 Security.addProvider(new BouncyCastleProvider());
                 cipher = Cipher.getInstance("CHACHA7539");
                 saltSize = 32;

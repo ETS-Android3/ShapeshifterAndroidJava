@@ -10,11 +10,13 @@ import org.libsodium.jni.NaCl;
 import org.libsodium.jni.Sodium;
 import org.operatorfoundation.shapeshifter.shadow.java.ShadowConfig;
 import org.operatorfoundation.shapeshifter.shadow.java.ShadowSocket;
+import org.operatorfoundation.shapeshifter.shadow.java.TestServer;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Instrumented test, which will execute on an Android device.
@@ -49,37 +51,54 @@ public class ExampleInstrumentedTest {
         assertEquals(message, new String(m));
     }
 
-@Test
-public void ShadowConnect(Context applicationContext) throws IOException {
-    try{
+//@Test
+//public void ShadowConnect(Context applicationContext) throws IOException {
+//    try{
+//
+//        ShadowConfig config = new ShadowConfig("1234", "AES-128-GCM");
+//        ShadowSocket socket = new ShadowSocket(config,"1234", 2222);
+//        //**********************Operaotor************
+//        String plaintext = "GET / HTTP/1.0\r\n\r\n";
+//        byte[] textBytes = plaintext.getBytes();
+//        try {
+//            socket.getOutputStream().write(textBytes);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//        try {
+//            socket.getOutputStream().flush();
+//            byte[] textOutput = new byte[2];
+//            System.out.println("Output.before read"+textOutput.toString());
+//            socket.getInputStream().read(textOutput); 			System.out.println("Output after read"+textOutput.toString());
+//
+//            socket.close();
+//
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    } catch (NoSuchAlgorithmException e) {
+//        e.printStackTrace();
+//    }
+//
+//}
 
-        ShadowConfig config = new ShadowConfig("1234", "AES-128-GCM");
-        ShadowSocket socket = new ShadowSocket(config,"1234", 2222);
-        //**********************Operaotor************
-        String plaintext = "GET / HTTP/1.0\r\n\r\n";
+    @Test
+    public void shadowSocketReadTestCHACHA() throws IOException, NoSuchAlgorithmException, IllegalArgumentException {
+
+        TestServer myRunnable = new TestServer();
+        Thread thread = new Thread(myRunnable);
+        thread.start();
+        String password = "1234";
+        ShadowConfig config = new ShadowConfig(password, "CHACHA20-IETF-POLY1305");
+        ShadowSocket shadowSocket = new ShadowSocket(config, "127.0.0.1", 2222);
+        assertNotNull(shadowSocket);
+        String plaintext = "Hi";
         byte[] textBytes = plaintext.getBytes();
-        try {
-            socket.getOutputStream().write(textBytes);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try {
-            socket.getOutputStream().flush();
-            byte[] textOutput = new byte[2];
-            System.out.println("Output.before read"+textOutput.toString());
-            socket.getInputStream().read(textOutput); 			System.out.println("Output after read"+textOutput.toString());
-
-            socket.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    } catch (NoSuchAlgorithmException e) {
-        e.printStackTrace();
+        shadowSocket.getOutputStream().write(textBytes);
+        shadowSocket.getOutputStream().flush();
+        byte[] buffer = new byte[2];
+        shadowSocket.getInputStream().read(buffer);
+        assertEquals("Yo", new String(buffer));
     }
-
-}
-
-
 
 }
