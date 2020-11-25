@@ -41,16 +41,7 @@ public class ShadowChaChaCipher extends ShadowCipher {
         this.salt = salt;
 
         key = createSecretKey(config, salt);
-        if (config.cipherMode == CipherMode.CHACHA20_IETF_POLY1305) {
-            try {
-                //TODO(Need to get the libsodium provider)
-                Security.addProvider(new BouncyCastleProvider());
-                cipher = Cipher.getInstance("CHACHA7539");
-                saltSize = 32;
-            } catch (NoSuchPaddingException e) {
-                e.printStackTrace();
-            }
-        }
+        saltSize = 32;
     }
 
     // Create a secret key using the two key derivation functions.
