@@ -137,22 +137,24 @@ public class ShadowChaChaCipher extends ShadowCipher {
     @Override
     byte[] encrypt(byte[] plaintext) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         // cipherText should be at least crypto_box_MACBYTES + messageBytes.length bytes long
-        byte[] cipherText = new byte[Sodium.crypto_box_macbytes() + plaintext.length];
+        int plaintext_length = plaintext.length;
+        int[] ciphertext_length = {plaintext.length + Sodium.crypto_aead_chacha20poly1305_ietf_abytes()};
+        byte[] ciphertext = new byte[ciphertext_length[0]];
         byte[] nonceBytes = nonce();
+        byte[] additional = new byte[0];
+        int additional_length = 0;
 
-        //This function writes the authentication tag, whose length is crypto_box_MACBYTES bytes, in cipherText,
-        // immediately followed by the encrypted message, whose length is the same as the messageBytes
-        Sodium.crypto_secretbox_easy(
-                cipherText,
-                plaintext,
-                plaintext.length,
-                nonceBytes,
-                key.getEncoded());
+        Sodium.crypto_aead_chacha20poly1305_ietf_encrypt(
+                ciphertext, ciphertext_length,
+                plaintext, plaintext_length,
+                additional, additional_length,
+                null, nonceBytes, key.getEncoded()
+        );
 
         // Return nonce + cipher text
-        byte[] fullMessage = new byte[SodiumConstants.NONCE_BYTES + cipherText.length];
+        byte[] fullMessage = new byte[nonceBytes.length + ciphertext.length];
         System.arraycopy(nonceBytes, 0, fullMessage, 0, nonceBytes.length);
-        System.arraycopy(cipherText, 0, fullMessage, nonceBytes.length, cipherText.length);
+        System.arraycopy(ciphertext, 0, fullMessage, nonceBytes.length, ciphertext.length);
 
         // increment counter every time nonce is used (encrypt/decrypt)
         counter += 1;
@@ -163,28 +165,32 @@ public class ShadowChaChaCipher extends ShadowCipher {
     // Decrypts data and increments the nonce counter.
     @Override
     public byte[] decrypt(byte[] encrypted) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+        byte[] additional = new byte[0];
+        int additional_length = 0;
+
         // Get the nonce from the encrypted bytes
         byte[] nonce = new byte[SodiumConstants.NONCE_BYTES];
         System.arraycopy(encrypted, 0, nonce, 0, nonce.length);
 
         // get the cipher text from the encrypted bytes
-        byte[] cipherText = new byte[encrypted.length - nonce.length];
-        System.arraycopy(encrypted, nonce.length, cipherText, 0, cipherText.length);
+        byte[] ciphertext = new byte[encrypted.length - nonce.length];
+        System.arraycopy(encrypted, nonce.length, ciphertext, 0, ciphertext.length);
 
-        // container for the decrypt results
-        byte[] decryptedMessageBytes = new byte[(int) (cipherText.length - Sodium.crypto_box_macbytes())];
+        int[] plaintext_length = {ciphertext.length - Sodium.crypto_aead_chacha20poly1305_ietf_abytes()};
+        byte[] plaintext = new byte[plaintext_length[0]];
 
-        Sodium.crypto_secretbox_open_easy(
-                decryptedMessageBytes,
-                cipherText,
-                cipherText.length,
-                nonce,
-                key.getEncoded());
+        Sodium.crypto_aead_chacha20poly1305_ietf_decrypt(
+                plaintext, plaintext_length,
+                null,
+                ciphertext, ciphertext.length,
+                additional, additional_length,
+                key.getEncoded(), nonce
+        );
 
         //increment counter every time nonce is used (encrypt/decrypt)
         counter += 1;
 
-        return decryptedMessageBytes;
+        return plaintext;
     }
 
 //    public byte[] decrypt(byte[] encrypted) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
