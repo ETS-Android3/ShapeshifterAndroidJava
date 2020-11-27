@@ -27,7 +27,7 @@ import static org.junit.Assert.assertNotNull;
 public class ExampleInstrumentedTest {
     @Test
     public void libsodiumTest() {
-        String message = "Test Message";
+        String message = "Te";
         Sodium sodium = NaCl.sodium();
 
         byte[] nonce = new byte[Sodium.crypto_aead_chacha20poly1305_npubbytes()];
@@ -53,7 +53,7 @@ public class ExampleInstrumentedTest {
 
     @Test
     public void libsodiumTestTheSequel() {
-        String message = "Test Message";
+        String message = "Te";
         Sodium sodium = NaCl.sodium();
 
         byte[] nonce = new byte[Sodium.crypto_aead_chacha20poly1305_ietf_npubbytes()];
@@ -176,6 +176,9 @@ public class ExampleInstrumentedTest {
 //        TestServer myRunnable = new TestServer();
 //        Thread thread = new Thread(myRunnable);
 //        thread.start();
+
+        Sodium sodium = NaCl.sodium();
+
         ShadowConfig config = new ShadowConfig("1234", "CHACHA20-IETF-POLY1305");
         ShadowSocket shadowSocket = new ShadowSocket(config, "159.203.158.90", 2345);
         assertNotNull(shadowSocket);

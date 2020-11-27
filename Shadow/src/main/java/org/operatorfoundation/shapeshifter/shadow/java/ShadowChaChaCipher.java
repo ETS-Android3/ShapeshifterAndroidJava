@@ -138,17 +138,20 @@ public class ShadowChaChaCipher extends ShadowCipher {
     byte[] encrypt(byte[] plaintext) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         // cipherText should be at least crypto_box_MACBYTES + messageBytes.length bytes long
         int plaintext_length = plaintext.length;
-        int[] ciphertext_length = {plaintext.length + Sodium.crypto_aead_chacha20poly1305_ietf_abytes()};
-        byte[] ciphertext = new byte[ciphertext_length[0]];
+        byte[] ciphertext = new byte[plaintext.length + Sodium.crypto_aead_chacha20poly1305_ietf_abytes()];
+        int[] ciphertext_length = {};
         byte[] nonceBytes = nonce();
         byte[] additional = new byte[0];
         int additional_length = 0;
+
+        byte[] nsec = new byte[0];
+        byte[] keyBytes = key.getEncoded();
 
         Sodium.crypto_aead_chacha20poly1305_ietf_encrypt(
                 ciphertext, ciphertext_length,
                 plaintext, plaintext_length,
                 additional, additional_length,
-                null, nonceBytes, key.getEncoded()
+                nsec, nonceBytes, keyBytes
         );
 
         // Return nonce + cipher text
@@ -178,10 +181,11 @@ public class ShadowChaChaCipher extends ShadowCipher {
 
         int[] plaintext_length = {ciphertext.length - Sodium.crypto_aead_chacha20poly1305_ietf_abytes()};
         byte[] plaintext = new byte[plaintext_length[0]];
+        byte[] nsec = new byte[0];
 
         Sodium.crypto_aead_chacha20poly1305_ietf_decrypt(
                 plaintext, plaintext_length,
-                null,
+                nsec,
                 ciphertext, ciphertext.length,
                 additional, additional_length,
                 key.getEncoded(), nonce
