@@ -154,15 +154,10 @@ public class ShadowChaChaCipher extends ShadowCipher {
                 nsec, nonceBytes, keyBytes
         );
 
-        // Return nonce + cipher text
-        byte[] fullMessage = new byte[nonceBytes.length + ciphertext.length];
-        System.arraycopy(nonceBytes, 0, fullMessage, 0, nonceBytes.length);
-        System.arraycopy(ciphertext, 0, fullMessage, nonceBytes.length, ciphertext.length);
-
         // increment counter every time nonce is used (encrypt/decrypt)
         counter += 1;
 
-        return fullMessage;
+        return ciphertext;
     }
 
     // Decrypts data and increments the nonce counter.
@@ -172,21 +167,16 @@ public class ShadowChaChaCipher extends ShadowCipher {
         int additional_length = 0;
 
         // Get the nonce from the encrypted bytes
-        byte[] nonce = new byte[SodiumConstants.NONCE_BYTES];
-        System.arraycopy(encrypted, 0, nonce, 0, nonce.length);
+        byte[] nonce = nonce();
 
-        // get the cipher text from the encrypted bytes
-        byte[] ciphertext = new byte[encrypted.length - nonce.length];
-        System.arraycopy(encrypted, nonce.length, ciphertext, 0, ciphertext.length);
-
-        int[] plaintext_length = {ciphertext.length - Sodium.crypto_aead_chacha20poly1305_ietf_abytes()};
+        int[] plaintext_length = {encrypted.length - Sodium.crypto_aead_chacha20poly1305_ietf_abytes()};
         byte[] plaintext = new byte[plaintext_length[0]];
         byte[] nsec = new byte[0];
 
         Sodium.crypto_aead_chacha20poly1305_ietf_decrypt(
                 plaintext, plaintext_length,
                 nsec,
-                ciphertext, ciphertext.length,
+                encrypted, encrypted.length,
                 additional, additional_length,
                 key.getEncoded(), nonce
         );
