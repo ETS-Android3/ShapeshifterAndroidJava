@@ -178,8 +178,8 @@ public class ShadowChaChaCipher extends ShadowCipher {
                 nsec,
                 encrypted, encrypted.length,
                 additional, additional_length,
-                key.getEncoded(), nonce
-        );
+                nonce, key.getEncoded()
+                );
 
         //increment counter every time nonce is used (encrypt/decrypt)
         counter += 1;

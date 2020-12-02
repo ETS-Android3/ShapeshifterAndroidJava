@@ -188,7 +188,7 @@ public class ExampleInstrumentedTest {
         shadowSocket.getOutputStream().flush();
         byte[] buffer = new byte[244];
         shadowSocket.getInputStream().read(buffer);
-        System.out.println(new String(buffer));
+        String decryptedString = (new String(buffer));
         //assertEquals("Yo", new String(buffer));
     }
 
