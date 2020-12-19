@@ -11,8 +11,14 @@ public class Utility {
     static byte[] readNBytes(InputStream input, int numBytes) throws IOException {
         byte[] buffer = new byte[numBytes];
         int offset = input.read(buffer);
+        if (offset == -1) {
+            return null;
+        }
         while (offset != numBytes) {
             int bytesRead = input.read(buffer, offset, numBytes - offset);
+            if (bytesRead == -1) {
+                return null;
+            }
             offset = offset + bytesRead;
         }
         return buffer;

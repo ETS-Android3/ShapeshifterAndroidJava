@@ -15,14 +15,14 @@ import java.security.NoSuchAlgorithmException;
 import javax.crypto.NoSuchPaddingException;
 
 // This class implements client sockets (also called just "sockets").
-public class ShadowSocket {
+public class ShadowSocket extends Socket {
     // Fields:
     Socket socket = new Socket();
     ShadowCipher encryptionCipher;
     ShadowCipher decryptionCipher;
     Boolean connectionStatus;
     private final ShadowConfig config;
-
+    
     public ShadowSocket(ShadowConfig config) throws NoSuchAlgorithmException {
         this.config = config;
         // Create salt for encryptionCipher
@@ -72,16 +72,19 @@ public class ShadowSocket {
 
     // Public functions:
     // Binds the socket to a local address.
+    @Override
     public void bind(SocketAddress bindpoint) throws IOException {
         socket.bind(bindpoint);
     }
 
     // Closes this socket.
+    @Override
     public void close() throws IOException {
         socket.close();
     }
 
     // Connects this socket to the server and initiates the handshake.
+    @Override
     public void connect(SocketAddress endpoint) throws IOException {
         socket.connect(endpoint);
         if (connectionStatus) {
@@ -92,6 +95,7 @@ public class ShadowSocket {
     }
 
     // Connects this socket to the server with a specified timeout value and initiates the handshake.
+    @Override
     public void connect(SocketAddress endpoint, int timeout) throws IOException {
         socket.connect(endpoint, timeout);
         if (connectionStatus) {
@@ -101,16 +105,19 @@ public class ShadowSocket {
     }
 
     // Returns the unique SocketChannel object associated with this socket, if any.
+    @Override
     public SocketChannel getChannel() {
         return socket.getChannel();
     }
 
     // Returns the address to which the socket is connected.
+    @Override
     public InetAddress getInetAddress() {
         return socket.getInetAddress();
     }
 
     // Returns an input stream and the decryption cipher for this socket.
+    @Override
     public InputStream getInputStream() throws IOException {
         ShadowCipher cipher = decryptionCipher;
         if (cipher != null) {
@@ -120,124 +127,149 @@ public class ShadowSocket {
     }
 
     // Tests if SO_KEEPALIVE is enabled.
+    @Override
     public boolean getKeepAlive() {
         return false;
     }
 
     // Gets the local address to which the socket is bound.
+    @Override
     public InetAddress getLocalAddress() {
         return socket.getLocalAddress();
     }
 
     // Returns the local port number to which this socket is bound.
+    @Override
     public int getLocalPort() {
         return socket.getLocalPort();
     }
 
     // Returns the address of the endpoint this socket is bound to.
+    @Override
     public SocketAddress getLocalSocketAddress() {
         return socket.getLocalSocketAddress();
     }
 
     // Tests if SO_OOBINLINE is enabled.
+    @Override
     public boolean getOOBInline() {
         return false;
     }
 
     // Returns an output stream and the encryption cipher for this socket.
+    @Override
     public OutputStream getOutputStream() throws IOException {
         return new ShadowOutputStream(socket.getOutputStream(), encryptionCipher);
     }
 
     // Returns the remote port number to which this socket is connected.
+    @Override
     public int getPort() {
         return socket.getPort();
     }
 
     // Gets the value of the SO_RCVBUF option for this Socket, that is the buffer size used by the platform for input on this Socket.
+    @Override
     public int getReceiveBufferSize() throws SocketException {
         return socket.getReceiveBufferSize();
     }
 
     // Returns the address of the endpoint this socket is connected to, or null if it is unconnected.
+    @Override
     public SocketAddress getRemoteSocketAddress() {
         return socket.getRemoteSocketAddress();
     }
 
     // Tests if SO_REUSEADDR is enabled.
+    @Override
     public boolean getReuseAddress() {
         return false;
     }
 
     // Get value of the SO_SNDBUF option for this Socket, that is the buffer size used by the platform for output on this Socket.
+    @Override
     public int getSendBufferSize() throws SocketException {
         return socket.getSendBufferSize();
     }
 
     // Returns setting for SO_LINGER. -1 implies that the option is disabled.
+    @Override
     public int getSoLinger() {
         return -1;
     }
 
     // Returns setting for SO_TIMEOUT. 0 returns implies that the option is disabled (i.e., timeout of infinity).
+    @Override
     public int getSoTimeout() {
         return 0;
     }
 
     // Tests if TCP_NODELAY is enabled.
+    @Override
     public boolean getTcpNoDelay() {
         return false;
     }
 
     // Gets traffic class or type-of-service in the IP header for packets sent from this Socket.
+    @Override
     public int getTrafficClass() throws SocketException {
         throw new SocketException();
     }
 
     // Returns the binding state of the socket.
+    @Override
     public boolean isBound() {
         return socket.isBound();
     }
 
     // Returns the closed state of the socket.
+    @Override
     public boolean isClosed() {
         return socket.isClosed();
     }
 
     // Returns the connection state of the socket.
+    @Override
     public boolean isConnected() {
         return socket.isConnected();
     }
 
     // Returns whether the read-half of the socket connection is closed.
+    @Override
     public boolean isInputShutdown() {
         return socket.isInputShutdown();
     }
 
     // Returns whether the write-half of the socket connection is closed.
+    @Override
     public boolean isOutputShutdown() {
         return socket.isOutputShutdown();
     }
 
     // Send one byte of urgent data on the socket.
+    @Override
     public void sendUrgentData(int data) {
     }
 
     // Sets the SO_RCVBUF option to the specified value for this Socket.
+    @Override
     public void setReceiveBufferSize(int size) throws SocketException {
         socket.setSendBufferSize(size);
     }
 
     // Sets the SO_SNDBUF option to the specified value for this Socket.
+    @Override
     public void setSendBufferSize(int size) throws SocketException {
         socket.setSendBufferSize(size);
     }
 
     // Enable/disable SO_TIMEOUT with the specified timeout, in milliseconds.
+    @Override
     public void setSoTimeout(int timeout) {
     }
 
     // Sets traffic class or type-of-service octet in the IP header for packets sent from this Socket.
+    @Override
     public void setTrafficClass(int tc) throws SocketException {
         throw new SocketException();
     }
@@ -269,7 +301,7 @@ public class ShadowSocket {
     private void receiveSalt() throws NoSuchAlgorithmException, IOException {
         int saltSize = ShadowCipher.determineSaltSize(encryptionCipher.config);
         byte[] result = Utility.readNBytes(socket.getInputStream(), saltSize);
-        if (result.length == encryptionCipher.salt.length) {
+        if (result != null && result.length == encryptionCipher.salt.length) {
             decryptionCipher = ShadowCipher.makeShadowCipherWithSalt(config, result);
         } else {
             throw new IOException();

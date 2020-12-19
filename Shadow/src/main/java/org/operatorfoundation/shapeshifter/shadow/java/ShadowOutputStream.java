@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
+import java.util.Arrays;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -20,13 +21,20 @@ public class ShadowOutputStream extends OutputStream {
         this.encryptionCipher = encryptionCipher;
     }
 
+    @Override
+    public void close() throws IOException {
+        outputStream.close();
+    }
+
     // Writes the specified byte to this output stream.
+    @Override
     public void write(int b) throws IOException {
         byte[] plainText = new byte[b];
         write(plainText);
     }
 
     // Writes b.length bytes from the specified byte array to this output stream.
+    @Override
     public void write(byte[] b) throws IOException {
         if (b != null && b.length > 0) {
 
@@ -54,7 +62,16 @@ public class ShadowOutputStream extends OutputStream {
         }
     }
 
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+        if (b != null && b.length != 0) {
+            byte[] buf = Arrays.copyOfRange(b, off, len - 1);
+            write(buf);
+        }
+    }
+
     // Flushes this output stream and forces any buffered output bytes to be written out.
+    @Override
     public void flush() throws IOException {
         outputStream.flush();
     }
