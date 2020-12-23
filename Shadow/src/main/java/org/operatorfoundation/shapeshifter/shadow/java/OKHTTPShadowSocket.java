@@ -10,8 +10,8 @@ public class OKHTTPShadowSocket extends ShadowSocket {
     final String shadowHost;
     final int shadowPort;
 
-    public OKHTTPShadowSocket(ShadowConfig config, String shadowHost, int shadowPort) throws NoSuchAlgorithmException {
-        super(config);
+    public OKHTTPShadowSocket(ShadowConfig config, String shadowHost, int shadowPort) throws NoSuchAlgorithmException, IOException {
+        super(config, shadowHost, shadowPort);
 
         this.shadowConfig = config;
         this.shadowHost = shadowHost;
