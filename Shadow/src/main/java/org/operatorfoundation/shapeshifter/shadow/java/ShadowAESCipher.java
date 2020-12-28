@@ -52,13 +52,6 @@ public class ShadowAESCipher extends ShadowCipher {
                 }
                 break;
             case CHACHA20_IETF_POLY1305:
-                try {
-                    Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
-                    cipher = Cipher.getInstance("CHACHA7539");
-                    saltSize = 32;
-                } catch (NoSuchPaddingException e) {
-                    e.printStackTrace();
-                }
                 break;
         }
     }
@@ -86,10 +79,6 @@ public class ShadowAESCipher extends ShadowCipher {
                 keyAlgorithm = "AES";
                 break;
 
-            case CHACHA20_IETF_POLY1305:
-                keyAlgorithm = "ChaCha20";
-                break;
-
             default:
                 throw new IllegalStateException("Unexpected or unsupported Algorithm value: " + keyAlgorithm);
         }
@@ -109,8 +98,6 @@ public class ShadowAESCipher extends ShadowCipher {
                 break;
 
             case AES_256_GCM:
-
-            case CHACHA20_IETF_POLY1305:
                 keylen = 32;
                 break;
         }
@@ -160,8 +147,7 @@ public class ShadowAESCipher extends ShadowCipher {
                 break;
 
             case CHACHA20_IETF_POLY1305:
-                ivSpec = new IvParameterSpec(nonceBytes);
-                break;
+                throw new InvalidAlgorithmParameterException();
 
             default:
                 throw new IllegalStateException();
@@ -177,6 +163,7 @@ public class ShadowAESCipher extends ShadowCipher {
 
     // Decrypts data and increments the nonce counter.
     public byte[] decrypt(byte[] encrypted) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+
         byte[] nonceBytes = nonce();
         AlgorithmParameterSpec ivSpec;
         switch (config.cipherMode) {
@@ -186,8 +173,7 @@ public class ShadowAESCipher extends ShadowCipher {
                 break;
 
             case CHACHA20_IETF_POLY1305:
-                ivSpec = new IvParameterSpec(nonceBytes);
-                break;
+                throw new InvalidAlgorithmParameterException();
 
             default:
                 throw new IllegalStateException();

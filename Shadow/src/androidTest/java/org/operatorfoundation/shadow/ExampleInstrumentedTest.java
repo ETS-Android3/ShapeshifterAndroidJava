@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.libsodium.jni.NaCl;
 import org.libsodium.jni.Sodium;
+import org.operatorfoundation.shapeshifter.shadow.java.ShadowCipher;
 import org.operatorfoundation.shapeshifter.shadow.java.ShadowConfig;
 import org.operatorfoundation.shapeshifter.shadow.java.ShadowSocket;
 import org.operatorfoundation.shapeshifter.shadow.java.TestServer;
@@ -190,6 +191,41 @@ public class ExampleInstrumentedTest {
         shadowSocket.getInputStream().read(buffer);
         String decryptedString = (new String(buffer));
         //assertEquals("Yo", new String(buffer));
+    }
+
+    @Test
+    public void badBufferSizeTest() throws IOException, NoSuchAlgorithmException {
+//        TestServer myRunnable = new TestServer();
+//        Thread thread = new Thread(myRunnable);
+//        thread.start();
+        ShadowConfig config = new ShadowConfig("1234", "AES-128-GCM");
+        ShadowSocket shadowSocket = new ShadowSocket(config, "159.203.158.90", 2346);
+        assertNotNull(shadowSocket);
+        String httpRequest = "GET / HTTP/1.0\r\n\r\n";
+        byte[] textBytes = httpRequest.getBytes();
+        shadowSocket.getOutputStream().write(textBytes);
+        shadowSocket.getOutputStream().flush();
+        byte[] buffer = new byte[16400];
+        int bytesRead = shadowSocket.getInputStream().read(buffer);
+        byte[] result = new byte[bytesRead];
+        System.arraycopy(buffer, 0, result, 0, bytesRead);
+        shadowSocket.getInputStream().read(buffer);
+        System.out.println(new String(buffer));
+        //assertEquals("Yo", new String(buffer));
+    }
+
+    @Test
+    public void wrongServerConfigTest() throws IOException, NoSuchAlgorithmException {
+        ShadowConfig config = new ShadowConfig("1234", "AES-128-GCM");
+        ShadowSocket shadowSocket = new ShadowSocket(config, "159.203.158.90", 2345);
+        assertNotNull(shadowSocket);
+        String httpRequest = "GET / HTTP/1.0\r\n\r\n";
+        byte[] textBytes = httpRequest.getBytes();
+        shadowSocket.getOutputStream().write(textBytes);
+        shadowSocket.getOutputStream().flush();
+        byte[] buffer = new byte[244];
+        shadowSocket.getInputStream().read(buffer);
+        System.out.println(new String(buffer));
     }
 
 }

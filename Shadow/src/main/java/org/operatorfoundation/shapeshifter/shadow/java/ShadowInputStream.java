@@ -14,7 +14,7 @@ import javax.crypto.IllegalBlockSizeException;
 public class ShadowInputStream extends InputStream {
     final InputStream networkInputStream;
     final ShadowCipher decryptionCipher;
-    byte[] buffer = new byte[0];
+    byte[] buffer = new byte[ShadowCipher.maxPayloadSize];
 
     // Applications that need to define a subclass of InputStream must always provide a method that returns the next byte of input.
     public ShadowInputStream(InputStream networkInputStream, ShadowCipher decryptionCipher) {
