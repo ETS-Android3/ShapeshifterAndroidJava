@@ -86,10 +86,10 @@ public class ShadowSocket extends Socket {
     // Connects this socket to the server and initiates the handshake.
     @Override
     public void connect(SocketAddress endpoint) throws IOException {
-        socket.connect(endpoint);
         if (connectionStatus) {
             throw new IOException();
         }
+        socket.connect(endpoint);
         connectionStatus = true;
         handshake();
     }
@@ -97,10 +97,11 @@ public class ShadowSocket extends Socket {
     // Connects this socket to the server with a specified timeout value and initiates the handshake.
     @Override
     public void connect(SocketAddress endpoint, int timeout) throws IOException {
-        socket.connect(endpoint, timeout);
         if (connectionStatus) {
             throw new IOException();
         }
+        socket.connect(endpoint, timeout);
+        connectionStatus = true;
         handshake();
     }
 

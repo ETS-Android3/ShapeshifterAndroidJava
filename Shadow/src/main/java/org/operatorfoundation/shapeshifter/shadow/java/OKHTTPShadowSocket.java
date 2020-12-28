@@ -6,16 +6,8 @@ import java.security.NoSuchAlgorithmException;
 
 public class OKHTTPShadowSocket extends ShadowSocket {
 
-    final ShadowConfig shadowConfig;
-    final String shadowHost;
-    final int shadowPort;
-
     public OKHTTPShadowSocket(ShadowConfig config, String shadowHost, int shadowPort) throws NoSuchAlgorithmException, IOException {
         super(config, shadowHost, shadowPort);
-
-        this.shadowConfig = config;
-        this.shadowHost = shadowHost;
-        this.shadowPort = shadowPort;
     }
 
     @Override
@@ -30,6 +22,6 @@ public class OKHTTPShadowSocket extends ShadowSocket {
 
     @Override
     public String toString() {
-        return "OKHTTPShadowSocket[" + "password = " + shadowConfig.password + ", cipherName = " + shadowConfig.cipherName + "]";
+        return "";
     }
 }
