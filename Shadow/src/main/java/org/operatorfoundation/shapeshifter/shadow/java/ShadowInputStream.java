@@ -30,17 +30,19 @@ public class ShadowInputStream extends InputStream {
     // Reads some number of bytes from the input stream and stores them into the buffer array b.
     @Override
     public int read(byte[] b) throws IOException {
-        //InputStream.read(b);
-        if (b != null && b.length > 0) {
-            // puts the bytes in a buffer
-            if (b.length <= buffer.length) {
-                int resultSize = Integer.min(b.length, buffer.length);
-                System.arraycopy(buffer, 0, b, 0, resultSize);
-                buffer = Arrays.copyOfRange(buffer, resultSize + 1, buffer.length - 1);
-
-                return resultSize;
-            }
+        if (b == null || b.length == 0) {
+            return 0;
         }
+
+        // puts the bytes in a buffer
+        if (b.length <= buffer.length) {
+            int resultSize = b.length;
+            System.arraycopy(buffer, 0, b, 0, resultSize);
+            buffer = Arrays.copyOfRange(buffer, resultSize, buffer.length);
+
+            return resultSize;
+        }
+
 
         //get encrypted length
         int lengthDataSize = ShadowCipher.lengthWithTagSize;
@@ -89,21 +91,22 @@ public class ShadowInputStream extends InputStream {
         int resultSize = Integer.min(b.length, buffer.length);
 
         // take bytes out of buffer.
-        System.arraycopy(buffer, 0, b, 0, buffer.length);
+        System.arraycopy(buffer, 0, b, 0, resultSize);
+        buffer = Arrays.copyOfRange(buffer, resultSize, buffer.length);
 
         return resultSize;
     }
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-       if (b != null && b.length != 0) {
-           byte[] readbuf = new byte[len];
-           int buflen = read(readbuf);
-           System.arraycopy(readbuf, off, b,0, buflen);
-           return buflen;
-       } else {
-           return 0;
-       }
+        if (b != null && b.length != 0) {
+            byte[] readbuf = new byte[len];
+            int buflen = read(readbuf);
+            System.arraycopy(readbuf, off, b, 0, buflen);
+            return buflen;
+        } else {
+            return 0;
+        }
     }
 
     // Reads the next byte of data from the input stream.

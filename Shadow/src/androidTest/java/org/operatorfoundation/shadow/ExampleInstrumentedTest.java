@@ -195,9 +195,6 @@ public class ExampleInstrumentedTest {
 
     @Test
     public void badBufferSizeTest() throws IOException, NoSuchAlgorithmException {
-//        TestServer myRunnable = new TestServer();
-//        Thread thread = new Thread(myRunnable);
-//        thread.start();
         ShadowConfig config = new ShadowConfig("1234", "AES-128-GCM");
         ShadowSocket shadowSocket = new ShadowSocket(config, "159.203.158.90", 2346);
         assertNotNull(shadowSocket);
@@ -205,13 +202,9 @@ public class ExampleInstrumentedTest {
         byte[] textBytes = httpRequest.getBytes();
         shadowSocket.getOutputStream().write(textBytes);
         shadowSocket.getOutputStream().flush();
-        byte[] buffer = new byte[16400];
-        int bytesRead = shadowSocket.getInputStream().read(buffer);
-        byte[] result = new byte[bytesRead];
-        System.arraycopy(buffer, 0, result, 0, bytesRead);
+        byte[] buffer = new byte[0];
         shadowSocket.getInputStream().read(buffer);
         System.out.println(new String(buffer));
-        //assertEquals("Yo", new String(buffer));
     }
 
     @Test
