@@ -217,7 +217,8 @@ public class ExampleInstrumentedTest {
         shadowSocket.getOutputStream().write(textBytes);
         shadowSocket.getOutputStream().flush();
         byte[] buffer = new byte[244];
-        shadowSocket.getInputStream().read(buffer);
+        int bytesRead = shadowSocket.getInputStream().read(buffer);
+        assert bytesRead > 0;
         System.out.println(new String(buffer));
     }
 

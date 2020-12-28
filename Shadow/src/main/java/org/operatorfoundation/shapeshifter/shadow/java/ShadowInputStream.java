@@ -14,7 +14,8 @@ import javax.crypto.IllegalBlockSizeException;
 public class ShadowInputStream extends InputStream {
     final InputStream networkInputStream;
     final ShadowCipher decryptionCipher;
-    byte[] buffer = new byte[ShadowCipher.maxPayloadSize];
+    byte[] buffer = new byte[0];
+    boolean decryptionFailed = false;
 
     // Applications that need to define a subclass of InputStream must always provide a method that returns the next byte of input.
     public ShadowInputStream(InputStream networkInputStream, ShadowCipher decryptionCipher) {
@@ -30,12 +31,15 @@ public class ShadowInputStream extends InputStream {
     // Reads some number of bytes from the input stream and stores them into the buffer array b.
     @Override
     public int read(byte[] b) throws IOException {
+        if (decryptionFailed) {
+            return -1;
+        }
         if (b == null || b.length == 0) {
             return 0;
         }
 
         // puts the bytes in a buffer
-        if (b.length <= buffer.length) {
+        if (buffer.length > 0) {
             int resultSize = b.length;
             System.arraycopy(buffer, 0, b, 0, resultSize);
             buffer = Arrays.copyOfRange(buffer, resultSize, buffer.length);
@@ -52,12 +56,15 @@ public class ShadowInputStream extends InputStream {
         if (encryptedLengthData == null) {
             return -1;
         }
+
         //decrypt encrypted length to find out payload length
         byte[] lengthData = new byte[0];
         try {
             lengthData = decryptionCipher.decrypt(encryptedLengthData);
         } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
             e.printStackTrace();
+            decryptionFailed = true;
+            return -1;
         }
 
         //change lengthData from BigEndian representation to in length
@@ -84,6 +91,8 @@ public class ShadowInputStream extends InputStream {
             payload = decryptionCipher.decrypt(encryptedPayload);
         } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
             e.printStackTrace();
+            decryptionFailed = true;
+            return -1;
         }
         // put payload into buffer
         buffer = Utility.plusEqualsByteArray(buffer, payload);
