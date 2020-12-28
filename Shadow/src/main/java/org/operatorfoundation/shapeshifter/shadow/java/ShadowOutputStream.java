@@ -65,7 +65,7 @@ public class ShadowOutputStream extends OutputStream {
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
         if (b != null && b.length != 0) {
-            byte[] buf = Arrays.copyOfRange(b, off, len - 1);
+            byte[] buf = Arrays.copyOfRange(b, off, len);
             write(buf);
         }
     }
