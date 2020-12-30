@@ -1,5 +1,7 @@
 package org.operatorfoundation.shapeshifter.shadow.java;
 
+import android.util.Log;
+
 import org.bouncycastle.crypto.digests.SHA1Digest;
 import org.bouncycastle.crypto.generators.HKDFBytesGenerator;
 import org.bouncycastle.crypto.params.HKDFParameters;
@@ -32,7 +34,7 @@ public class ShadowAESCipher extends ShadowCipher {
     public ShadowAESCipher(ShadowConfig config, byte[] salt) throws NoSuchAlgorithmException {
         this.config = config;
         this.salt = salt;
-        
+
         key = createSecretKey(config, salt);
         switch (config.cipherMode) {
             case AES_128_GCM:
@@ -50,8 +52,6 @@ public class ShadowAESCipher extends ShadowCipher {
                 } catch (NoSuchPaddingException e) {
                     e.printStackTrace();
                 }
-                break;
-            case CHACHA20_IETF_POLY1305:
                 break;
         }
     }
@@ -82,7 +82,15 @@ public class ShadowAESCipher extends ShadowCipher {
             default:
                 throw new IllegalStateException("Unexpected or unsupported Algorithm value: " + keyAlgorithm);
         }
-        return new SecretKeySpec(okm, keyAlgorithm);
+        try {
+            SecretKey secretKey = new SecretKeySpec(okm, keyAlgorithm);
+            Log.i("hkdfSha1", "SecretKey created.");
+            return secretKey;
+        } catch (IllegalArgumentException e) {
+            Log.e("hkdfSha1", "Could not create SecretKey.");
+            throw e;
+        }
+
     }
 
     // Derives the pre-shared key from the config.
@@ -100,6 +108,10 @@ public class ShadowAESCipher extends ShadowCipher {
             case AES_256_GCM:
                 keylen = 32;
                 break;
+        }
+
+        if (keylen == 0) {
+            Log.e("kdf", "Invalid key length.");
         }
 
         while (buffer.length < keylen) {

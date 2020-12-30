@@ -1,5 +1,7 @@
 package org.operatorfoundation.shapeshifter.shadow.java;
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.security.InvalidAlgorithmParameterException;
@@ -52,12 +54,14 @@ public class ShadowOutputStream extends OutputStream {
                 try {
                     cipherText = encryptionCipher.pack(bytesToSend);
                 } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+                    Log.e("write", "Failed to pack bytes.");
                     e.printStackTrace();
                 }
                 outputStream.write(cipherText);
                 outputStream.flush();
 
                 offset += numBytesToSend;
+                Log.i("write", "Write successful.");
             }
         }
     }

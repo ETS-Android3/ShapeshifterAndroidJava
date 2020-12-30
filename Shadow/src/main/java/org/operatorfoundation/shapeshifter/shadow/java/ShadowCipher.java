@@ -1,5 +1,7 @@
 package org.operatorfoundation.shapeshifter.shadow.java;
 
+import android.util.Log;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.InvalidAlgorithmParameterException;
@@ -52,13 +54,14 @@ public abstract class ShadowCipher {
 
             case CHACHA20_IETF_POLY1305:
                 return new ShadowChaChaCipher(config, salt);
-                //break;
+            //break;
 
             default:
                 throw new IllegalStateException("Unexpected or unsupported Algorithm value");
         }
 
     }
+
     static int determineSaltSize(ShadowConfig config) {
         switch (config.cipherMode) {
             case AES_128_GCM:
@@ -69,6 +72,7 @@ public abstract class ShadowCipher {
                 finalSaltSize = 32;
                 break;
         }
+        Log.i("determineSaltSize", "Salt size is $finalSaltSize");
         return finalSaltSize;
     }
 
@@ -101,6 +105,7 @@ public abstract class ShadowCipher {
         byte[] salt = new byte[saltSize];
         Random random = new Random();
         random.nextBytes(salt);
+        Log.i("createSalt", "Salt created.");
         return salt;
     }
 
@@ -126,7 +131,7 @@ public abstract class ShadowCipher {
         buffer.put((byte) 0);
         buffer.put((byte) 0);
         buffer.put((byte) 0);
-
+        Log.i("nonce", "Nonce created. Counter is $counter.");
         return buffer.array();
     }
 }

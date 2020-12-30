@@ -1,5 +1,7 @@
 package org.operatorfoundation.shapeshifter.shadow.java;
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -32,9 +34,11 @@ public class ShadowInputStream extends InputStream {
     @Override
     public int read(byte[] b) throws IOException {
         if (decryptionFailed) {
+            Log.e("read", "Decryption failed on read.");
             return -1;
         }
         if (b == null || b.length == 0) {
+            Log.e("read", "read was given an empty byte array.");
             return 0;
         }
 
@@ -54,6 +58,7 @@ public class ShadowInputStream extends InputStream {
         // read bytes up to the size of encrypted lengthSize into a byte buffer
         byte[] encryptedLengthData = Utility.readNBytes(networkInputStream, lengthDataSize);
         if (encryptedLengthData == null) {
+            Log.e("read", "Could not read encrypted length bytes.");
             return -1;
         }
 
@@ -61,9 +66,11 @@ public class ShadowInputStream extends InputStream {
         byte[] lengthData = new byte[0];
         try {
             lengthData = decryptionCipher.decrypt(encryptedLengthData);
+            Log.i("read", "Length bytes decrypted.");
         } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
             e.printStackTrace();
             decryptionFailed = true;
+            Log.e("read", "Decryption failed on read.");
             return -1;
         }
 
@@ -84,14 +91,17 @@ public class ShadowInputStream extends InputStream {
         //read and decrypt payload with the resulting length
         byte[] encryptedPayload = Utility.readNBytes(networkInputStream, payloadLength + ShadowCipher.tagSize);
         if (encryptedPayload == null) {
+            Log.e("read", "Could not read encrypted length data.");
             return -1;
         }
         byte[] payload = new byte[0];
         try {
             payload = decryptionCipher.decrypt(encryptedPayload);
+            Log.i("read", "Payload decrypted.");
         } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
             e.printStackTrace();
             decryptionFailed = true;
+            Log.e("read", "Decryption failed on read.");
             return -1;
         }
         // put payload into buffer

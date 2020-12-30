@@ -1,5 +1,7 @@
 package org.operatorfoundation.shapeshifter.shadow.java;
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -12,11 +14,13 @@ public class Utility {
         byte[] buffer = new byte[numBytes];
         int offset = input.read(buffer);
         if (offset == -1) {
+            Log.e("readNBytes", "Could not find the offset for readNBytes.");
             return null;
         }
         while (offset != numBytes) {
             int bytesRead = input.read(buffer, offset, numBytes - offset);
             if (bytesRead == -1) {
+                Log.e("readNBytes", "Could not read the specified number of bytes.");
                 return null;
             }
             offset = offset + bytesRead;

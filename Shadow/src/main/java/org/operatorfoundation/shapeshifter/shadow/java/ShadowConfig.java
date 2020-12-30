@@ -1,5 +1,7 @@
 package org.operatorfoundation.shapeshifter.shadow.java;
 
+import android.util.Log;
+
 public class ShadowConfig {
     final String password;
     final String cipherName;
@@ -28,6 +30,7 @@ public class ShadowConfig {
         }
 
         if (maybeMode == null) {
+            Log.e("ShadowConfig", "Invalid cipherMode in the config: $cipherName");
             throw new IllegalArgumentException();
         }
 

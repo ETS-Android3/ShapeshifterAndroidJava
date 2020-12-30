@@ -1,5 +1,7 @@
 package org.operatorfoundation.shapeshifter.shadow.java;
 
+import android.util.Log;
+
 import org.bouncycastle.crypto.digests.SHA1Digest;
 import org.bouncycastle.crypto.generators.HKDFBytesGenerator;
 import org.bouncycastle.crypto.params.HKDFParameters;
@@ -65,7 +67,14 @@ public class ShadowChaChaCipher extends ShadowCipher {
         } else {
             throw new IllegalStateException("Unexpected or unsupported Algorithm value: " + keyAlgorithm);
         }
-        return new SecretKeySpec(okm, keyAlgorithm);
+        try {
+            SecretKey secretKey = new SecretKeySpec(okm, keyAlgorithm);
+            Log.i("hkdfSha1", "SecretKey created.");
+            return secretKey;
+        } catch (IllegalArgumentException e) {
+            Log.e("hkdfSha1", "Could not create SecretKey.");
+            throw e;
+        }
     }
 
     // Derives the pre-shared key from the config.
@@ -77,6 +86,10 @@ public class ShadowChaChaCipher extends ShadowCipher {
         int keylen = 0;
         if (config.cipherMode == CipherMode.CHACHA20_IETF_POLY1305) {
             keylen = 32;
+        }
+
+        if (keylen == 0) {
+            Log.e("kdf", "Invalid key length.");
         }
 
         while (buffer.length < keylen) {

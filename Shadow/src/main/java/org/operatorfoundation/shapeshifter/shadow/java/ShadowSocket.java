@@ -1,5 +1,7 @@
 package org.operatorfoundation.shapeshifter.shadow.java;
 
+import android.util.Log;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,6 +31,7 @@ public class ShadowSocket extends Socket {
         byte[] salt = ShadowCipher.createSalt(config);
         // Create an encryptionCipher
         encryptionCipher = ShadowCipher.makeShadowCipherWithSalt(config, salt);
+        Log.i("init", "Encryption cipher created.");
     }
 
     // Constructors:
@@ -80,6 +83,7 @@ public class ShadowSocket extends Socket {
     // Closes this socket.
     @Override
     public void close() throws IOException {
+        Log.i("close", "Socket closed.");
         socket.close();
     }
 
@@ -87,22 +91,26 @@ public class ShadowSocket extends Socket {
     @Override
     public void connect(SocketAddress endpoint) throws IOException {
         if (connectionStatus) {
+            Log.e("connect", "Already connected.");
             throw new IOException();
         }
         socket.connect(endpoint);
         connectionStatus = true;
         handshake();
+        Log.i("connect", "Connect succeeded.");
     }
 
     // Connects this socket to the server with a specified timeout value and initiates the handshake.
     @Override
     public void connect(SocketAddress endpoint, int timeout) throws IOException {
         if (connectionStatus) {
+            Log.e("connect", "Already connected.");
             throw new IOException();
         }
         socket.connect(endpoint, timeout);
         connectionStatus = true;
         handshake();
+        Log.i("connect", "Connect succeeded.");
     }
 
     // Returns the unique SocketChannel object associated with this socket, if any.
@@ -122,8 +130,10 @@ public class ShadowSocket extends Socket {
     public InputStream getInputStream() throws IOException {
         ShadowCipher cipher = decryptionCipher;
         if (cipher != null) {
+            Log.i("getInputStream", "Decryption cipher created.");
             return new ShadowInputStream(socket.getInputStream(), cipher);
         }
+        Log.e("getInputStream", "Decryption cipher was not created.");
         throw new IOException();
     }
 
@@ -288,6 +298,7 @@ public class ShadowSocket extends Socket {
         sendSalt();
         try {
             receiveSalt();
+            Log.i("handshake", "handshake completed");
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
@@ -296,6 +307,7 @@ public class ShadowSocket extends Socket {
     // Sends the salt through the output stream.
     private void sendSalt() throws IOException {
         socket.getOutputStream().write(encryptionCipher.salt);
+        Log.i("sendSalt", "Salt sent.");
     }
 
     // Receives the salt through the input stream.
@@ -304,7 +316,9 @@ public class ShadowSocket extends Socket {
         byte[] result = Utility.readNBytes(socket.getInputStream(), saltSize);
         if (result != null && result.length == encryptionCipher.salt.length) {
             decryptionCipher = ShadowCipher.makeShadowCipherWithSalt(config, result);
+            Log.i("receiveSalt", "Salt received.");
         } else {
+            Log.e("receiveSalt", "Salt was not received.");
             throw new IOException();
         }
     }
