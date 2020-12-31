@@ -134,7 +134,7 @@ public class ShadowSocketChannel {
                 // change lengthData from  BigEndian representation to int length.
                 byte leftByte = lengthData[0];
                 byte rightByte = lengthData[1];
-                int payloadLength = ((int)leftByte * 256) + (int)rightByte;
+                int payloadLength = ((int) leftByte * 256) + (int) rightByte;
 
                 // read and decrypt payload with the resulting length.
                 ByteBuffer encryptedPayload = Utility.readNBytes(socketChannel, payloadLength + ShadowCipher.tagSize);
@@ -203,10 +203,10 @@ public class ShadowSocketChannel {
                 while (buffer.length > 0) {
                     int numBytesToSend = Integer.min(ShadowCipher.maxPayloadSize, buffer.length);
 
-                     //make a copy of the buffer
+                    //make a copy of the buffer
                     byte[] bytesToSend = new byte[numBytesToSend];
 
-                     //take bytes out of buffer.
+                    //take bytes out of buffer.
                     System.arraycopy(buffer, 0, bytesToSend, 0, numBytesToSend);
 
                     byte[] cipherText = new byte[0];

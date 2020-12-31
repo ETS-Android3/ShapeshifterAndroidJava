@@ -24,7 +24,7 @@ public class ShadowSocket extends Socket {
     ShadowCipher decryptionCipher;
     Boolean connectionStatus;
     private final ShadowConfig config;
-    
+
     public ShadowSocket(ShadowConfig config) throws NoSuchAlgorithmException {
         this.config = config;
         // Create salt for encryptionCipher
