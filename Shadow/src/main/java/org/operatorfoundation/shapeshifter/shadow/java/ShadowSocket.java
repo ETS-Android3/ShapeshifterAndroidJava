@@ -44,7 +44,7 @@ public class ShadowSocket extends Socket {
     }
 
     // Creates a socket and connects it to the specified remote host on the specified remote port.
-    ShadowSocket(ShadowConfig config, String host, int port, InetAddress localAddr, int localPort) throws IOException, NoSuchAlgorithmException {
+    public ShadowSocket(ShadowConfig config, String host, int port, InetAddress localAddr, int localPort) throws IOException, NoSuchAlgorithmException {
         this(config);
         socket = new Socket(host, port, localAddr, localPort);
         connectionStatus = true;
@@ -52,7 +52,7 @@ public class ShadowSocket extends Socket {
     }
 
     // Creates a stream socket and connects it to the specified port number at the specified IP address.
-    ShadowSocket(ShadowConfig config, InetAddress address, int port) throws IOException, NoSuchAlgorithmException {
+    public ShadowSocket(ShadowConfig config, InetAddress address, int port) throws IOException, NoSuchAlgorithmException {
         this(config);
         socket = new Socket(address, port);
         connectionStatus = true;
@@ -60,7 +60,7 @@ public class ShadowSocket extends Socket {
     }
 
     // Creates a socket and connects it to the specified remote address on the specified remote port.
-    ShadowSocket(ShadowConfig config, InetAddress address, int port, InetAddress localAddr, int localPort) throws IOException, NoSuchAlgorithmException {
+    public ShadowSocket(ShadowConfig config, InetAddress address, int port, InetAddress localAddr, int localPort) throws IOException, NoSuchAlgorithmException {
         this(config);
         socket = new Socket(address, port, localAddr, localPort);
         connectionStatus = true;
@@ -68,7 +68,7 @@ public class ShadowSocket extends Socket {
     }
 
     // Creates an unconnected socket, specifying the type of proxy, if any, that should be used regardless of any other settings.
-    ShadowSocket(ShadowConfig config, Proxy proxy) throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException {
+    public ShadowSocket(ShadowConfig config, Proxy proxy) throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException {
         this(config);
         socket = new Socket(proxy);
     }
