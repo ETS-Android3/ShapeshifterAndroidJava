@@ -131,7 +131,7 @@ public class ShadowSocket extends Socket {
         ShadowCipher cipher = decryptionCipher;
         if (cipher != null) {
             Log.i("getInputStream", "Decryption cipher created.");
-            return new ShadowInputStream(socket.getInputStream(), cipher);
+            return new ShadowInputStream(this, socket.getInputStream(), cipher);
         }
         Log.e("getInputStream", "Decryption cipher was not created.");
         throw new IOException();

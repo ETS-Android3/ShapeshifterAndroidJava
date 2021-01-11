@@ -16,13 +16,16 @@ import javax.crypto.IllegalBlockSizeException;
 public class ShadowInputStream extends InputStream {
     final InputStream networkInputStream;
     final ShadowCipher decryptionCipher;
+    final ShadowSocket shadowSocket;
     byte[] buffer = new byte[0];
     boolean decryptionFailed = false;
 
+
     // Applications that need to define a subclass of InputStream must always provide a method that returns the next byte of input.
-    public ShadowInputStream(InputStream networkInputStream, ShadowCipher decryptionCipher) {
+    public ShadowInputStream(ShadowSocket shadowSocket, InputStream networkInputStream, ShadowCipher decryptionCipher) {
         this.networkInputStream = networkInputStream;
         this.decryptionCipher = decryptionCipher;
+        this.shadowSocket = shadowSocket;
     }
 
     @Override
@@ -71,7 +74,8 @@ public class ShadowInputStream extends InputStream {
             e.printStackTrace();
             decryptionFailed = true;
             Log.e("read", "Decryption failed on read.");
-            return -1;
+            shadowSocket.close();
+            throw new IOException();
         }
 
         //change lengthData from BigEndian representation to in length
@@ -102,7 +106,8 @@ public class ShadowInputStream extends InputStream {
             e.printStackTrace();
             decryptionFailed = true;
             Log.e("read", "Decryption failed on read.");
-            return -1;
+            shadowSocket.close();
+            throw new IOException();
         }
         // put payload into buffer
         buffer = Utility.plusEqualsByteArray(buffer, payload);

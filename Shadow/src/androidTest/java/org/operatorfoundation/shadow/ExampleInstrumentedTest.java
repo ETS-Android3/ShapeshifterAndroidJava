@@ -2,7 +2,9 @@ package org.operatorfoundation.shadow;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.Timeout;
 import org.junit.runner.RunWith;
 import org.libsodium.jni.NaCl;
 import org.libsodium.jni.Sodium;
@@ -22,6 +24,10 @@ import static org.junit.Assert.assertNotNull;
  */
 @RunWith(AndroidJUnit4.class)
 public class ExampleInstrumentedTest {
+
+    @Rule
+    public Timeout globalTimeout = new Timeout(20 * 1000); // 20 seconds
+
     @Test
     public void libsodiumTest() {
         String message = "Te";
@@ -120,7 +126,7 @@ public class ExampleInstrumentedTest {
         System.out.println(new String(buffer));
     }
 
-    @Test
+    @Test(expected = IOException.class)
     public void wrongServerConfigTest() throws IOException, NoSuchAlgorithmException {
         ShadowConfig config = new ShadowConfig("1234", "AES-128-GCM");
         ShadowSocket shadowSocket = new ShadowSocket(config, "159.203.158.90", 2345);
@@ -130,9 +136,7 @@ public class ExampleInstrumentedTest {
         shadowSocket.getOutputStream().write(textBytes);
         shadowSocket.getOutputStream().flush();
         byte[] buffer = new byte[244];
-        int bytesRead = shadowSocket.getInputStream().read(buffer);
-        assert bytesRead > 0;
-        System.out.println(new String(buffer));
+        shadowSocket.getInputStream().read(buffer);
     }
 
 }
