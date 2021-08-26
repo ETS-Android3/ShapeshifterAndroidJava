@@ -122,9 +122,4 @@ public class ShadowServerSocket {
     public void setSoTimeout(int timeout) {
     }
 
-    // Returns the implementation address and implementation port of this socket as a String.
-    public String toString() {
-        return "ShadowServerSocket[" + "password = " + config.password + ", cipherName = " + config.cipherName + "]";
-    }
-
 }

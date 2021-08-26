@@ -285,13 +285,6 @@ public class ShadowSocket extends Socket {
         throw new SocketException();
     }
 
-    // Converts this socket to a String.
-    @Override
-    public String toString() {
-        return "ShadowSocket[" + "password = " + config.password + ", cipherName = " + config.cipherName + "]";
-    }
-
-
     // Private functions:
     // Exchanges the salt.
     private void handshake() throws IOException {

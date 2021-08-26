@@ -83,7 +83,7 @@ public class ExampleInstrumentedTest {
     @Test
     public void shadowSocketDemoServerTest() throws IOException, NoSuchAlgorithmException {
         ShadowConfig config = new ShadowConfig("1234", "AES-128-GCM");
-        ShadowSocket shadowSocket = new ShadowSocket(config, "159.203.158.90", 2346);
+        ShadowSocket shadowSocket = new ShadowSocket(config, "", 2346);
         assertNotNull(shadowSocket);
         String httpRequest = "GET / HTTP/1.0\r\n\r\n";
         byte[] textBytes = httpRequest.getBytes();
@@ -100,7 +100,7 @@ public class ExampleInstrumentedTest {
         Sodium sodium = NaCl.sodium();
 
         ShadowConfig config = new ShadowConfig("1234", "CHACHA20-IETF-POLY1305");
-        ShadowSocket shadowSocket = new ShadowSocket(config, "159.203.158.90", 2345);
+        ShadowSocket shadowSocket = new ShadowSocket(config, "", 2345);
         assertNotNull(shadowSocket);
         String httpRequest = "GET / HTTP/1.0\r\n\r\n";
         byte[] textBytes = httpRequest.getBytes();
@@ -115,7 +115,7 @@ public class ExampleInstrumentedTest {
     @Test
     public void badBufferSizeTest() throws IOException, NoSuchAlgorithmException {
         ShadowConfig config = new ShadowConfig("1234", "AES-128-GCM");
-        ShadowSocket shadowSocket = new ShadowSocket(config, "159.203.158.90", 2346);
+        ShadowSocket shadowSocket = new ShadowSocket(config, "", 2346);
         assertNotNull(shadowSocket);
         String httpRequest = "GET / HTTP/1.0\r\n\r\n";
         byte[] textBytes = httpRequest.getBytes();
@@ -129,7 +129,7 @@ public class ExampleInstrumentedTest {
     @Test(expected = IOException.class)
     public void wrongServerConfigTest() throws IOException, NoSuchAlgorithmException {
         ShadowConfig config = new ShadowConfig("1234", "AES-128-GCM");
-        ShadowSocket shadowSocket = new ShadowSocket(config, "159.203.158.90", 2345);
+        ShadowSocket shadowSocket = new ShadowSocket(config, "", 2345);
         assertNotNull(shadowSocket);
         String httpRequest = "GET / HTTP/1.0\r\n\r\n";
         byte[] textBytes = httpRequest.getBytes();

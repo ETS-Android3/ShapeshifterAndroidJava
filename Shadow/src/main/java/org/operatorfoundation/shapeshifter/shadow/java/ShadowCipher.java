@@ -103,7 +103,7 @@ public abstract class ShadowCipher {
                 throw new IllegalStateException("Unexpected value: " + config.cipherMode);
         }
         byte[] salt = new byte[saltSize];
-        Random random = new Random();
+        Random random = new java.security.SecureRandom();
         random.nextBytes(salt);
         Log.i("createSalt", "Salt created.");
         return salt;
