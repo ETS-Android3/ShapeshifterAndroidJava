@@ -91,7 +91,6 @@ public class ExampleInstrumentedTest {
         shadowSocket.getOutputStream().flush();
         byte[] buffer = new byte[244];
         shadowSocket.getInputStream().read(buffer);
-        System.out.println(new String(buffer));
     }
 
     @Test
@@ -123,7 +122,6 @@ public class ExampleInstrumentedTest {
         shadowSocket.getOutputStream().flush();
         byte[] buffer = new byte[0];
         shadowSocket.getInputStream().read(buffer);
-        System.out.println(new String(buffer));
     }
 
     @Test(expected = IOException.class)

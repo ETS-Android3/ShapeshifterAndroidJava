@@ -168,7 +168,5 @@ public class ExampleUnitTest {
                 1
         };
         byte[] encrypted = cipher.doFinal(plainText);
-        System.out.println(cipher.getClass());
-        System.out.println(encrypted.length);
     }
 }

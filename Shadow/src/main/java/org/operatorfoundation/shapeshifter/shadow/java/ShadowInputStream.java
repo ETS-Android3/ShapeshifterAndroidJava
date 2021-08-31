@@ -86,10 +86,7 @@ public class ShadowInputStream extends InputStream {
         if (rightInt < 0) {
             rightInt += 256;
         }
-//        long ULeftByte = Integer.toUnsignedLong((int) leftByte);
-//        System.out.println((int) ULeftByte);
-//        long URightByte = Integer.toUnsignedLong((int) rightByte);
-//        System.out.println((int) URightByte);
+
         int payloadLength = (leftInt + rightInt);
 
         //read and decrypt payload with the resulting length
