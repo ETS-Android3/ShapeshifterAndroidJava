@@ -6,5 +6,6 @@ public enum CipherMode {
     //  We are not supporting it at this time either.
     AES_128_GCM,
     AES_256_GCM,
-    CHACHA20_IETF_POLY1305
+    CHACHA20_IETF_POLY1305,
+    DarkStar
 }

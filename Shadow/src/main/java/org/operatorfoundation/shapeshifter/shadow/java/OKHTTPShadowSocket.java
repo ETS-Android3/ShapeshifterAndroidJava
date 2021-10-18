@@ -3,10 +3,11 @@ package org.operatorfoundation.shapeshifter.shadow.java;
 import java.io.IOException;
 import java.net.SocketAddress;
 import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
 public class OKHTTPShadowSocket extends ShadowSocket {
 
-    public OKHTTPShadowSocket(ShadowConfig config, String shadowHost, int shadowPort) throws NoSuchAlgorithmException, IOException {
+    public OKHTTPShadowSocket(ShadowConfig config, String shadowHost, int shadowPort) throws NoSuchAlgorithmException, IOException, InvalidKeySpecException {
         super(config, shadowHost, shadowPort);
     }
 

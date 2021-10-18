@@ -27,6 +27,9 @@ public class ShadowConfig {
                 maybeMode = CipherMode.CHACHA20_IETF_POLY1305;
                 break;
 
+            case "DarkStar":
+                maybeMode = CipherMode.DarkStar;
+
         }
 
         if (maybeMode == null) {

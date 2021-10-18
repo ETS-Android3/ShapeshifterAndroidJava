@@ -13,6 +13,7 @@ import java.net.SocketException;
 import java.nio.channels.SocketChannel;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.NoSuchPaddingException;
 
@@ -24,23 +25,43 @@ public class ShadowSocket extends Socket {
     ShadowCipher decryptionCipher;
     Boolean connectionStatus;
     private final ShadowConfig config;
+    String host;
+    int port;
+    byte[] clientSalt;
+    DarkStar darkStar;
 
     public ShadowSocket(ShadowConfig config) throws NoSuchAlgorithmException {
         this.config = config;
-        // Create salt for encryptionCipher
-        byte[] salt = ShadowCipher.createSalt(config);
-        // Create an encryptionCipher
-        encryptionCipher = ShadowCipher.makeShadowCipherWithSalt(config, salt);
-        Log.i("init", "Encryption cipher created.");
     }
 
     // Constructors:
     // Creates a stream socket and connects it to the specified port number on the named host.
-    public ShadowSocket(ShadowConfig config, String host, int port) throws IOException, NoSuchAlgorithmException {
+    public ShadowSocket(ShadowConfig config, String host, int port) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         this(config);
-        socket = new Socket(host, port);
-        connectionStatus = true;
-        handshake();
+        this.host = host;
+        this.port = port;
+
+        // Create salt for encryptionCipher
+        if (config.cipherMode.equals(CipherMode.DarkStar)) {
+            darkStar = new DarkStar(config, host, port);
+            this.clientSalt = darkStar.createSalt();
+        } else {
+            this.clientSalt = ShadowCipher.createSalt(config);
+        }
+
+        // Create an encryptionCipher
+        if (config.cipherMode.equals(CipherMode.DarkStar)) {
+            socket = new Socket(host, port);
+            connectionStatus = true;
+            handshake();
+            encryptionCipher = ShadowDarkStarCipher.makeShadowCipherWithSalt(config, this.clientSalt);
+        } else {
+            encryptionCipher = ShadowCipher.makeShadowCipherWithSalt(config, this.clientSalt);
+            socket = new Socket(host, port);
+            connectionStatus = true;
+            handshake();
+        }
+        Log.i("init", "Encryption cipher created.");
     }
 
     // Creates a socket and connects it to the specified remote host on the specified remote port.
@@ -292,23 +313,28 @@ public class ShadowSocket extends Socket {
         try {
             receiveSalt();
             Log.i("handshake", "handshake completed");
-        } catch (NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
             e.printStackTrace();
         }
     }
 
     // Sends the salt through the output stream.
     private void sendSalt() throws IOException {
-        socket.getOutputStream().write(encryptionCipher.salt);
+        socket.getOutputStream().write(this.clientSalt);
         Log.i("sendSalt", "Salt sent.");
     }
 
     // Receives the salt through the input stream.
-    private void receiveSalt() throws NoSuchAlgorithmException, IOException {
-        int saltSize = ShadowCipher.determineSaltSize(encryptionCipher.config);
+    private void receiveSalt() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException, InvalidKeyException {
+        int saltSize = ShadowCipher.determineSaltSize(this.config);
         byte[] result = Utility.readNBytes(socket.getInputStream(), saltSize);
-        if (result != null && result.length == encryptionCipher.salt.length) {
-            decryptionCipher = ShadowCipher.makeShadowCipherWithSalt(config, result);
+        if (result != null && result.length == this.clientSalt.length) {
+            if (config.cipherMode.equals(CipherMode.DarkStar)) {
+                decryptionCipher = darkStar.makeDecryptionCipher(result);
+                encryptionCipher = darkStar.makeEncryptionCipher();
+            } else {
+                decryptionCipher = ShadowCipher.makeShadowCipherWithSalt(config, result);
+            }
             Log.i("receiveSalt", "Salt received.");
         } else {
             Log.e("receiveSalt", "Salt was not received.");

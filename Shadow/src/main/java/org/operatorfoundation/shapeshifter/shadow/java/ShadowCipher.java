@@ -71,6 +71,9 @@ public abstract class ShadowCipher {
             case CHACHA20_IETF_POLY1305:
                 finalSaltSize = 32;
                 break;
+            case DarkStar:
+                finalSaltSize = 96;
+                break;
         }
         Log.i("determineSaltSize", "Salt size is $finalSaltSize");
         return finalSaltSize;

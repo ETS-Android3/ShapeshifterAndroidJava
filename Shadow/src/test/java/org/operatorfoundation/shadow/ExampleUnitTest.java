@@ -81,7 +81,7 @@ public class ExampleUnitTest {
     byte[] serverStringBytes = "server".getBytes();
 
     @Test
-    public void shadowSocketConstructor1TestAES128() throws IOException, NoSuchAlgorithmException {
+    public void shadowSocketConstructor1TestAES128() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         TestServer myRunnable = new TestServer();
         Thread thread = new Thread(myRunnable);
         thread.start();
@@ -180,7 +180,7 @@ public class ExampleUnitTest {
     }
 
     @Test
-    public void shadowSocketReadTestAES256() throws IOException, NoSuchAlgorithmException {
+    public void shadowSocketReadTestAES256() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         TestServer myRunnable = new TestServer();
         Thread thread = new Thread(myRunnable);
         thread.start();
@@ -332,12 +332,44 @@ public class ExampleUnitTest {
         assertArrayEquals(serverSide, clientSide);
     }
 
-    @Test
-    public void clientConfirmationTest() throws NoSuchAlgorithmException, UnknownHostException, InvalidKeyException {
-        byte[] serverSide = generateClientConfirmationCode("127.0.0.1", 1234, serverPersistentKey.getPublic(), clientEphemeralKey.getPublic(), clientEphemeralKey.getPublic(), serverPersistentKey.getPrivate());
-        byte[] clientSide = generateClientConfirmationCode("127.0.0.1", 1234, serverPersistentKey.getPublic(), clientEphemeralKey.getPublic(), serverPersistentKey.getPublic(), clientEphemeralKey.getPrivate());
+//    @Test
+//    public void clientConfirmationTest() throws NoSuchAlgorithmException, UnknownHostException, InvalidKeyException {
+//        byte[] serverSide = generateClientConfirmationCode("127.0.0.1", 1234, serverPersistentKey.getPublic(), clientEphemeralKey.getPublic(), clientEphemeralKey.getPublic(), serverPersistentKey.getPrivate());
+//        byte[] clientSide = generateClientConfirmationCode("127.0.0.1", 1234, serverPersistentKey.getPublic(), clientEphemeralKey.getPublic(), serverPersistentKey.getPublic(), clientEphemeralKey.getPrivate());
+//
+//        assertArrayEquals(serverSide, clientSide);
+//    }
 
-        assertArrayEquals(serverSide, clientSide);
+    @Test
+    public void FunctionalTest() {
+
     }
 
+    @Test
+    public void shadowDarkStarServerTest() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+        ShadowConfig config = new ShadowConfig(serverPersistentPublicKeyString, "DarkStar");
+        ShadowSocket shadowSocket = new ShadowSocket(config, "127.0.0.1", 1234);
+        assertNotNull(shadowSocket);
+        String httpRequest = "GET / HTTP/1.0\r\n\r\n";
+        byte[] textBytes = httpRequest.getBytes();
+        shadowSocket.getOutputStream().write(textBytes);
+        shadowSocket.getOutputStream().flush();
+        byte[] buffer = new byte[5];
+        shadowSocket.getInputStream().read(buffer);
+    }
+
+    @Test
+    public void keySizeTest() {
+        String publicSwift = "646093fa14eb79b58a51cb1ab3c17de9280ee56490f68dc97cb1cb984d6ee70070ef995097f13575de091cb527793c8b6c32a10cb152b8618891060ca4e2b98a";
+        String privateSwift = "18bdd4600155c7cfb72b6fbde7249184674b2ad874e4b1af60ef7c92dfdfb9b7";
+
+        System.out.println("Java public key size:");
+        System.out.println(clientEphemeralPublicKeyString.length());
+        System.out.println("Java private key size:");
+        System.out.println(clientEphemeralPrivateKeyString.length());
+        System.out.println("Swift public key size:");
+        System.out.println(publicSwift.length());
+        System.out.println("Swift private key size:");
+        System.out.println(privateSwift.length());
+    }
 }
