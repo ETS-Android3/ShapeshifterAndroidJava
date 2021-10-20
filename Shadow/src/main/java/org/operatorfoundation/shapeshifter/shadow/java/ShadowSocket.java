@@ -13,6 +13,7 @@ import java.net.SocketException;
 import java.nio.channels.SocketChannel;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
 
 import javax.crypto.NoSuchPaddingException;
@@ -36,7 +37,7 @@ public class ShadowSocket extends Socket {
 
     // Constructors:
     // Creates a stream socket and connects it to the specified port number on the named host.
-    public ShadowSocket(ShadowConfig config, String host, int port) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    public ShadowSocket(ShadowConfig config, String host, int port) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
         this(config);
         this.host = host;
         this.port = port;
@@ -54,7 +55,7 @@ public class ShadowSocket extends Socket {
             socket = new Socket(host, port);
             connectionStatus = true;
             handshake();
-            encryptionCipher = ShadowDarkStarCipher.makeShadowCipherWithSalt(config, this.clientSalt);
+            encryptionCipher = darkStar.makeEncryptionCipher();
         } else {
             encryptionCipher = ShadowCipher.makeShadowCipherWithSalt(config, this.clientSalt);
             socket = new Socket(host, port);

@@ -72,7 +72,7 @@ public abstract class ShadowCipher {
                 finalSaltSize = 32;
                 break;
             case DarkStar:
-                finalSaltSize = 96;
+                finalSaltSize = 91 + 32 + 32;
                 break;
         }
         Log.i("determineSaltSize", "Salt size is $finalSaltSize");

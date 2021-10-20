@@ -5,6 +5,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
 
 import javax.net.SocketFactory;
@@ -25,7 +26,7 @@ public class ShadowSocketFactory extends SocketFactory {
     public Socket createSocket(String host, int port) throws IOException, UnknownHostException {
         try {
             return new ShadowSocket(shadowConfig, shadowHost, shadowPort);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchProviderException e) {
             e.printStackTrace();
             throw new IOException();
         }
@@ -35,7 +36,7 @@ public class ShadowSocketFactory extends SocketFactory {
     public Socket createSocket(String host, int port, InetAddress localHost, int localPort) throws IOException, UnknownHostException {
         try {
             return new ShadowSocket(shadowConfig, shadowHost, shadowPort);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchProviderException e) {
             e.printStackTrace();
             throw new IOException();
         }
@@ -45,7 +46,7 @@ public class ShadowSocketFactory extends SocketFactory {
     public Socket createSocket(InetAddress host, int port) throws IOException {
         try {
             return new ShadowSocket(shadowConfig, shadowHost, shadowPort);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchProviderException e) {
             e.printStackTrace();
             throw new IOException();
         }
@@ -55,7 +56,7 @@ public class ShadowSocketFactory extends SocketFactory {
     public Socket createSocket(InetAddress address, int port, InetAddress localAddress, int localPort) throws IOException {
         try {
             return new ShadowSocket(shadowConfig, shadowHost, shadowPort);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchProviderException e) {
             e.printStackTrace();
             throw new IOException();
         }
@@ -65,7 +66,7 @@ public class ShadowSocketFactory extends SocketFactory {
     public Socket createSocket() throws IOException {
         try {
             return new OKHTTPShadowSocket(shadowConfig, shadowHost, shadowPort);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
+        } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchProviderException e) {
             e.printStackTrace();
             throw new IOException();
         }

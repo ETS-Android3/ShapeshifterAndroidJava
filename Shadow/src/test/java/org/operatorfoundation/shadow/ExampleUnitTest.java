@@ -35,6 +35,7 @@ import java.security.PublicKey;
 import java.security.Security;
 import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.TreeSet;
 
 import javax.crypto.BadPaddingException;
@@ -81,7 +82,7 @@ public class ExampleUnitTest {
     byte[] serverStringBytes = "server".getBytes();
 
     @Test
-    public void shadowSocketConstructor1TestAES128() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    public void shadowSocketConstructor1TestAES128() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
         TestServer myRunnable = new TestServer();
         Thread thread = new Thread(myRunnable);
         thread.start();
@@ -180,7 +181,7 @@ public class ExampleUnitTest {
     }
 
     @Test
-    public void shadowSocketReadTestAES256() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
+    public void shadowSocketReadTestAES256() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
         TestServer myRunnable = new TestServer();
         Thread thread = new Thread(myRunnable);
         thread.start();
@@ -282,9 +283,18 @@ public class ExampleUnitTest {
         String encoded = DarkStar.bytesToHex(clientEphemeralPrivateKey.getEncoded(), clientEphemeralPrivateKey.getEncoded().length);
         System.out.println("private: ");
         System.out.println(encoded);
-        byte[] clientEphemeralKeyData = clientEphemeralKey.getPublic().getEncoded();
+        PublicKey clientEphemeralPublicKey = clientEphemeralKey.getPublic();
+        byte[] clientEphemeralKeyData = clientEphemeralPublicKey.getEncoded();
         System.out.println("public: ");
         System.out.println(DarkStar.bytesToHex(clientEphemeralKeyData, clientEphemeralKeyData.length));
+        if (!(clientEphemeralPublicKey instanceof BCECPublicKey)) {
+            System.out.println("could not typecast to bcec");
+        }
+        BCECPublicKey bcecPubKey = (BCECPublicKey) clientEphemeralPublicKey;
+        byte[] encodedKey = bcecPubKey.getQ().getEncoded(true);
+        System.out.println("public encoded: ");
+        System.out.println(DarkStar.bytesToHex(encodedKey, encodedKey.length));
+        System.out.println(encodedKey.length);
     }
 
     @Test
@@ -302,7 +312,8 @@ public class ExampleUnitTest {
         }
         BCECPublicKey bcecPubKey = (BCECPublicKey) clientEphemeralPublicKey;
         byte[] encodedKey = bcecPubKey.getQ().getEncoded(true);
-        DarkStar.bytesToHex(encodedKey, encodedKey.length);
+        String encodedKeyHex = DarkStar.bytesToHex(encodedKey, encodedKey.length);
+        System.out.println(encodedKeyHex);
 
         ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256r1");
         ECPoint point = ecSpec.getCurve().decodePoint(encodedKey);
@@ -346,8 +357,9 @@ public class ExampleUnitTest {
     }
 
     @Test
-    public void shadowDarkStarServerTest() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
-        ShadowConfig config = new ShadowConfig(serverPersistentPublicKeyString, "DarkStar");
+    public void shadowDarkStarServerTest() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
+        // generate public key on swift for SPPK
+        ShadowConfig config = new ShadowConfig("3059301306072a8648ce3d020106082a8648ce3d030107034200044ed5d754928698e5f73de6ff22feb516e146b7fd1a0e6ca466ccb77e2cc324bf3deb2b4df4d7583b521ecd466f37e84b8f7930482ca2a0d18baffd353fb207fd", "DarkStar");
         ShadowSocket shadowSocket = new ShadowSocket(config, "127.0.0.1", 1234);
         assertNotNull(shadowSocket);
         String httpRequest = "GET / HTTP/1.0\r\n\r\n";
@@ -360,7 +372,7 @@ public class ExampleUnitTest {
 
     @Test
     public void keySizeTest() {
-        String publicSwift = "646093fa14eb79b58a51cb1ab3c17de9280ee56490f68dc97cb1cb984d6ee70070ef995097f13575de091cb527793c8b6c32a10cb152b8618891060ca4e2b98a";
+        String publicSwift = "3059301306072a8648ce3d020106082a8648ce3d030107034200044ed5d754928698e5f73de6ff22feb516e146b7fd1a0e6ca466ccb77e2cc324bf3deb2b4df4d7583b521ecd466f37e84b8f7930482ca2a0d18baffd353fb207fd";
         String privateSwift = "18bdd4600155c7cfb72b6fbde7249184674b2ad874e4b1af60ef7c92dfdfb9b7";
 
         System.out.println("Java public key size:");
@@ -371,5 +383,32 @@ public class ExampleUnitTest {
         System.out.println(publicSwift.length());
         System.out.println("Swift private key size:");
         System.out.println(privateSwift.length());
+    }
+
+    @Test
+    public void bytesToPublicKeyTest() throws InvalidKeySpecException, NoSuchAlgorithmException {
+        // get the client private and public key
+        PublicKey clientEphemeralPublicKey = null;
+        if (clientEphemeralKey != null) {
+            clientEphemeralPublicKey = clientEphemeralKey.getPublic();
+        }
+
+        if (!(clientEphemeralPublicKey instanceof BCECPublicKey)) {
+            System.out.println("could not typecast to bcec");
+        }
+        BCECPublicKey bcecPubKey = (BCECPublicKey) clientEphemeralPublicKey;
+        byte[] encodedKey = bcecPubKey.getQ().getEncoded(true);
+        String encodedKeyHex = DarkStar.bytesToHex(encodedKey, encodedKey.length);
+        System.out.println(encodedKeyHex);
+
+        PublicKey decodedKey = DarkStar.bytesToPublicKey(encodedKey);
+    }
+
+    @Test
+    public void x509LoaderTest() throws NoSuchAlgorithmException, InvalidKeySpecException {
+        KeyFactory keyFactory = KeyFactory.getInstance("EC", new BouncyCastleProvider());
+        byte[] publicKeyBytes = DarkStar.hexToBytes("3059301306072a8648ce3d020106082a8648ce3d030107034200046a8cd9e5f5cfa5118a9d5ebcd7fc9806436ec6731516ff6cfda2f43e1a387a5d3f43586628725e9f7f0d3f1eb1bda463127b52049199bfc7538225df22e9a419");
+        X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
+        PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
     }
 }
