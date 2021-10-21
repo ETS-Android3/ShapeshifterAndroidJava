@@ -1,5 +1,6 @@
 package org.operatorfoundation.shadow;
 
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPrivateKey;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 import org.bouncycastle.jcajce.spec.AEADParameterSpec;
 import org.bouncycastle.jce.ECNamedCurveTable;
@@ -44,16 +45,20 @@ import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import javax.security.cert.CertificateException;
+import javax.security.cert.X509Certificate;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.bytesToHex;
+import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.bytesToPublicKey;
 import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.generateClientConfirmationCode;
 import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.generateECKeys;
 import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.generateServerConfirmationCode;
 import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.generateSharedKeyClient;
 import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.generateSharedKeyServer;
+import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.hexToBytes;
 import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.publicKeyToBytes;
 
 import android.util.Log;
@@ -405,10 +410,35 @@ public class ExampleUnitTest {
     }
 
     @Test
-    public void x509LoaderTest() throws NoSuchAlgorithmException, InvalidKeySpecException {
+    public void x509LoaderTest() throws NoSuchAlgorithmException, InvalidKeySpecException, CertificateException {
         KeyFactory keyFactory = KeyFactory.getInstance("EC", new BouncyCastleProvider());
         byte[] publicKeyBytes = DarkStar.hexToBytes("3059301306072a8648ce3d020106082a8648ce3d030107034200046a8cd9e5f5cfa5118a9d5ebcd7fc9806436ec6731516ff6cfda2f43e1a387a5d3f43586628725e9f7f0d3f1eb1bda463127b52049199bfc7538225df22e9a419");
         X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
         PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
+        X509Certificate cert = X509Certificate.getInstance(publicKeyBytes);
+
+        System.out.println(cert);
+        System.out.println(publicKey);
+    }
+
+    @Test
+    public void compressKeyTest() throws NoSuchAlgorithmException, InvalidKeySpecException {
+        KeyFactory keyFactory = KeyFactory.getInstance("EC", new BouncyCastleProvider());
+        byte[] publicKeyBytes = DarkStar.hexToBytes("3059301306072a8648ce3d020106082a8648ce3d030107034200046a8cd9e5f5cfa5118a9d5ebcd7fc9806436ec6731516ff6cfda2f43e1a387a5d3f43586628725e9f7f0d3f1eb1bda463127b52049199bfc7538225df22e9a419");
+        X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
+        PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
+        BCECPublicKey bcecPublicKey = (BCECPublicKey) publicKey;
+        ECPoint point = bcecPublicKey.getQ();
+        byte[] result = point.getEncoded(true);
+
+        System.out.println(result);
+    }
+
+    @Test
+    public void compressPublicKeyTest() throws InvalidKeySpecException, NoSuchAlgorithmException {
+        String pubkeyString = "4ed5d754928698e5f73de6ff22feb516e146b7fd1a0e6ca466ccb77e2cc324bf";
+        byte[] pubKeyBytes = hexToBytes(pubkeyString);
+        PublicKey pubKey = bytesToPublicKey(pubKeyBytes);
+        assertNotNull(pubKey);
     }
 }

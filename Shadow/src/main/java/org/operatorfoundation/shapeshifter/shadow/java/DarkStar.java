@@ -100,14 +100,14 @@ public class DarkStar {
             Log.e("DarkStar", "incorrect salt size")            ;
         }
 
-        System.arraycopy(salt, 0, ephemeralPublicKeyBuf, 0, 91);
-        System.arraycopy(salt, 91, confirmationCodeBuf, 0, 32);
-        System.arraycopy(salt, 123 , nonceBuf, 0, 32);
+        System.arraycopy(salt, 0, ephemeralPublicKeyBuf, 0, 32);
+        System.arraycopy(salt, 32, confirmationCodeBuf, 0, 32);
+        System.arraycopy(salt, 64 , nonceBuf, 0, 32);
     }
 
     public ShadowCipher makeDecryptionCipher(byte[] salt) throws InvalidKeySpecException, NoSuchAlgorithmException, UnknownHostException, InvalidKeyException {
 
-        byte[] serverEphemeralPublicKeyData = new byte[91];
+        byte[] serverEphemeralPublicKeyData = new byte[32];
         byte[] serverConfirmationCode = new byte[32];
         byte[] serverNonce = new byte[32];
 
@@ -285,13 +285,28 @@ public class DarkStar {
     }
 
     public static byte[] publicKeyToBytes(PublicKey pubKey) {
-        return pubKey.getEncoded();
+        BCECPublicKey bcecPublicKey = (BCECPublicKey) pubKey;
+        ECPoint point = bcecPublicKey.getQ();
+        byte[] encodedPoint = point.getEncoded(true);
+        byte[] result = new byte[32];
+        System.arraycopy(encodedPoint, 1, result, 0, 32);
+        return result;
     }
 
     public static PublicKey bytesToPublicKey(byte[] bytes) throws NoSuchAlgorithmException, InvalidKeySpecException {
+//        ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256r1");
+//        ECPoint point = ecSpec.getCurve().decodePoint(bytes);
+//        ECPublicKeySpec pubSpec = new ECPublicKeySpec(point, ecSpec);
+//        KeyFactory kf = KeyFactory.getInstance("EC", new BouncyCastleProvider());
+//        return kf.generatePublic(pubSpec);
         KeyFactory keyFactory = KeyFactory.getInstance("EC", new BouncyCastleProvider());
-        X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(bytes);
-        return keyFactory.generatePublic(publicKeySpec);
+        ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256r1");
+        byte[] encodedPoint = new byte[33];
+        System.arraycopy(bytes, 0, encodedPoint, 1, 32);
+        encodedPoint[0] = 3;
+        ECPoint point = ecSpec.getCurve().decodePoint(encodedPoint);
+        ECPublicKeySpec pubSpec = new ECPublicKeySpec(point, ecSpec);
+        return keyFactory.generatePublic(pubSpec);
     }
 
     public static String bytesToHex(byte[] data, int length) {
