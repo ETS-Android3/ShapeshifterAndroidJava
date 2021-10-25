@@ -167,9 +167,6 @@ public class ShadowAESCipher extends ShadowCipher {
         cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
         byte[] encrypted = cipher.doFinal(plaintext);
 
-        // increment counter every time nonce is used (encrypt/decrypt)
-        counter += 1;
-
         return encrypted;
     }
 
@@ -191,9 +188,6 @@ public class ShadowAESCipher extends ShadowCipher {
                 throw new IllegalStateException();
         }
         cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
-
-        //increment counter every time nonce is used (encrypt/decrypt)
-        counter += 1;
 
         return cipher.doFinal(encrypted);
     }

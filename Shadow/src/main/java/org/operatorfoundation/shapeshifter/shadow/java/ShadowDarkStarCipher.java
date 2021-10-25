@@ -16,12 +16,10 @@ import javax.crypto.spec.GCMParameterSpec;
 
 public class ShadowDarkStarCipher extends ShadowCipher {
 SecretKey key;
-byte[] nonce;
 
     // ShadowCipher contains the encryption and decryption methods.
-    public ShadowDarkStarCipher(SecretKey key, byte[] nonce) throws NoSuchAlgorithmException {
+    public ShadowDarkStarCipher(SecretKey key) throws NoSuchAlgorithmException {
         this.key = key;
-        this.nonce = nonce;
 
         try {
             cipher = Cipher.getInstance("AES_256/GCM/NoPadding");
@@ -73,6 +71,7 @@ byte[] nonce;
     // Encrypts the data and increments the nonce counter.
     byte[] encrypt(byte[] plaintext) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         AlgorithmParameterSpec ivSpec;
+        byte[] nonce = nonce();
         ivSpec = new GCMParameterSpec(tagSizeBits, nonce);
         cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
 
@@ -82,6 +81,7 @@ byte[] nonce;
     // Decrypts data and increments the nonce counter.
     public byte[] decrypt(byte[] encrypted) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
         AlgorithmParameterSpec ivSpec;
+        byte[] nonce = nonce();
         ivSpec = new GCMParameterSpec(tagSizeBits, nonce);
         cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
 

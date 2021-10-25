@@ -72,7 +72,7 @@ public abstract class ShadowCipher {
                 finalSaltSize = 32;
                 break;
             case DarkStar:
-                finalSaltSize = 32 + 32 + 32;
+                finalSaltSize = 32 + 32;
                 break;
         }
         Log.i("determineSaltSize", "Salt size is $finalSaltSize");
@@ -135,6 +135,9 @@ public abstract class ShadowCipher {
         buffer.put((byte) 0);
         buffer.put((byte) 0);
         Log.i("nonce", "Nonce created. Counter is $counter.");
+
+        counter += 1;
+
         return buffer.array();
     }
 }

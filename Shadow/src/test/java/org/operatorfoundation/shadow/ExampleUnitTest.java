@@ -362,16 +362,18 @@ public class ExampleUnitTest {
     }
 
     @Test
-    public void shadowDarkStarServerTest() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
+    public void shadowDarkStarClientTest() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
         // generate public key on swift for SPPK
-        ShadowConfig config = new ShadowConfig("3059301306072a8648ce3d020106082a8648ce3d030107034200044ed5d754928698e5f73de6ff22feb516e146b7fd1a0e6ca466ccb77e2cc324bf3deb2b4df4d7583b521ecd466f37e84b8f7930482ca2a0d18baffd353fb207fd", "DarkStar");
+        // pass 1: recent: 03d089c225ef8cda8d477a586f062b31a756270124d94944e458edf1a9e1e41ed6
+        // old pass: 3059301306072a8648ce3d020106082a8648ce3d030107034200044ed5d754928698e5f73de6ff22feb516e146b7fd1a0e6ca466ccb77e2cc324bf3deb2b4df4d7583b521ecd466f37e84b8f7930482ca2a0d18baffd353fb207fd
+        ShadowConfig config = new ShadowConfig("d089c225ef8cda8d477a586f062b31a756270124d94944e458edf1a9e1e41ed6", "DarkStar");
         ShadowSocket shadowSocket = new ShadowSocket(config, "127.0.0.1", 1234);
         assertNotNull(shadowSocket);
         String httpRequest = "GET / HTTP/1.0\r\n\r\n";
         byte[] textBytes = httpRequest.getBytes();
         shadowSocket.getOutputStream().write(textBytes);
         shadowSocket.getOutputStream().flush();
-        byte[] buffer = new byte[5];
+        byte[] buffer = new byte[4];
         shadowSocket.getInputStream().read(buffer);
     }
 

@@ -50,8 +50,6 @@ public class DarkStar {
     static byte[] serverStringBytes = "server".getBytes();
     KeyPair clientEphemeralKeyPair;
     PublicKey serverPersistentPublicKey;
-    byte[] clientNonce;
-    byte[] serverNonce;
     ShadowConfig config;
     String host;
     int port;
@@ -86,32 +84,28 @@ public class DarkStar {
         byte[] clientConfirmationCode = generateClientConfirmationCode(host, port, serverPersistentPublicKey, clientEphemeralPublicKey, clientEphemeralPrivateKey);
         salt = Utility.plusEqualsByteArray(salt, clientConfirmationCode);
 
-        // Create the nonce
-        clientNonce = generateNonce();
-        salt = Utility.plusEqualsByteArray(salt, clientNonce);
-
-        System.out.println("salt: " + bytesToHex(salt));
+        System.out.println("(createSalt) clientEphemeralPublicKey: " + bytesToHex(clientEphemeralPublicKeyData));
+        System.out.println("(createSalt) clientConfirmationCode: " + bytesToHex(clientConfirmationCode));
+        System.out.println("(createSalt) salt: " + bytesToHex(salt));
 
         return salt;
     }
 
-    public void splitSalt(byte[] salt, byte[] ephemeralPublicKeyBuf, byte[] confirmationCodeBuf, byte[] nonceBuf)  {
-        if (salt.length != 155) {
+    public void splitSalt(byte[] salt, byte[] ephemeralPublicKeyBuf, byte[] confirmationCodeBuf)  {
+        if (salt.length != 64) {
             Log.e("DarkStar", "incorrect salt size")            ;
         }
 
         System.arraycopy(salt, 0, ephemeralPublicKeyBuf, 0, 32);
         System.arraycopy(salt, 32, confirmationCodeBuf, 0, 32);
-        System.arraycopy(salt, 64 , nonceBuf, 0, 32);
     }
 
     public ShadowCipher makeDecryptionCipher(byte[] salt) throws InvalidKeySpecException, NoSuchAlgorithmException, UnknownHostException, InvalidKeyException {
 
         byte[] serverEphemeralPublicKeyData = new byte[32];
         byte[] serverConfirmationCode = new byte[32];
-        byte[] serverNonce = new byte[32];
 
-        splitSalt(salt, serverEphemeralPublicKeyData, serverConfirmationCode, serverNonce);
+        splitSalt(salt, serverEphemeralPublicKeyData, serverConfirmationCode);
 
         // turn the server's public key data back to a public key type
         PublicKey serverEphemeralPublicKey = bytesToPublicKey(serverEphemeralPublicKeyData);
@@ -125,11 +119,11 @@ public class DarkStar {
             throw new InvalidKeyException();
         }
 
-        return new ShadowDarkStarCipher(sharedKeyClient, serverNonce);
+        return new ShadowDarkStarCipher(sharedKeyClient);
     }
 
     public ShadowCipher makeEncryptionCipher() throws NoSuchAlgorithmException {
-        return new ShadowDarkStarCipher(sharedKeyClient, clientNonce);
+        return new ShadowDarkStarCipher(sharedKeyClient);
     }
 
     public static KeyPair generateECKeys() {
@@ -232,8 +226,8 @@ public class DarkStar {
     public static byte[] generateServerConfirmationCode(String host, int port, PublicKey serverEphemeralPublicKey, PublicKey clientEphemeralPublicKey, SecretKey sharedKey) throws NoSuchAlgorithmException, UnknownHostException, InvalidKeyException {
         byte[] secretKeyData = sharedKey.getEncoded();
         byte[] serverIdentifier = makeServerIdentifier(host, port);
-        byte[] serverEphemeralPublicKeyData = serverEphemeralPublicKey.getEncoded();
-        byte[] clientEphemeralPublicKeyData = clientEphemeralPublicKey.getEncoded();
+        byte[] serverEphemeralPublicKeyData = publicKeyToBytes(serverEphemeralPublicKey);
+        byte[] clientEphemeralPublicKeyData = publicKeyToBytes(clientEphemeralPublicKey);
 
         System.out.println("SCC1: " + bytesToHex(secretKeyData));
         System.out.println("SCC2: " + bytesToHex(serverIdentifier));
@@ -254,18 +248,18 @@ public class DarkStar {
 
     public static byte[] generateClientConfirmationCode(String host, int port, PublicKey serverPersistentPublicKey, PublicKey clientEphemeralPublicKey, PrivateKey clientEphemeralPrivateKey) throws NoSuchAlgorithmException, UnknownHostException {
         SecretKey sharedSecret = DarkStar.generateSharedSecret(clientEphemeralPrivateKey, serverPersistentPublicKey);
-        System.out.println("SPP: " + bytesToHex(serverPersistentPublicKey.getEncoded()));
-        System.out.println("CEPub: " + bytesToHex(clientEphemeralPublicKey.getEncoded()));
-        System.out.println("CEPriv: " + bytesToHex(clientEphemeralPrivateKey.getEncoded()));
+        System.out.println("(clientConfirmationCode) SPPubKey: " + bytesToHex(publicKeyToBytes(serverPersistentPublicKey)));
+        System.out.println("(clientConfirmationCode) CEPubKey: " + bytesToHex(publicKeyToBytes(clientEphemeralPublicKey)));
+        System.out.println("(clientConfirmationCode) CEPrivKey: " + bytesToHex(clientEphemeralPrivateKey.getEncoded()));
         byte[] serverIdentifier = makeServerIdentifier(host, port);
-        byte[] serverPersistentPublicKeyData = serverPersistentPublicKey.getEncoded();
-        byte[] clientEphemeralPublicKeyData = clientEphemeralPublicKey.getEncoded();
+        byte[] serverPersistentPublicKeyData = publicKeyToBytes(serverPersistentPublicKey);
+        byte[] clientEphemeralPublicKeyData = publicKeyToBytes(clientEphemeralPublicKey);
 
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        System.out.println("ecdhData: " + bytesToHex(sharedSecret.getEncoded()));
-        System.out.println("serverIdentifier: " + bytesToHex(serverIdentifier));
-        System.out.println("SPPK: " + bytesToHex(serverPersistentPublicKeyData));
-        System.out.println("CEPK: " + bytesToHex(clientEphemeralPublicKeyData));
+        System.out.println("(clientConfirmationCode) ecdhData: " + bytesToHex(sharedSecret.getEncoded()));
+        System.out.println("(clientConfirmationCode) serverIdentifier: " + bytesToHex(serverIdentifier));
+        System.out.println("(clientConfirmationCode) SPPubKey: " + bytesToHex(serverPersistentPublicKeyData));
+        System.out.println("(clientConfirmationCode) CEPubKey: " + bytesToHex(clientEphemeralPublicKeyData));
 
         digest.update(sharedSecret.getEncoded());
         digest.update(serverIdentifier);
@@ -275,13 +269,6 @@ public class DarkStar {
         digest.update(clientStringBytes);
 
         return digest.digest();
-    }
-
-    public byte[] generateNonce() throws NoSuchAlgorithmException, NoSuchProviderException {
-        SecureRandom random = SecureRandom.getInstance("NativePRNG", "SUN");
-        byte[] bytes = new byte[32];
-        random.nextBytes(bytes);
-        return bytes;
     }
 
     public static byte[] publicKeyToBytes(PublicKey pubKey) {

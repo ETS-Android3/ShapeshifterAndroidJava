@@ -167,9 +167,6 @@ public class ShadowChaChaCipher extends ShadowCipher {
                 nsec, nonceBytes, keyBytes
         );
 
-        // increment counter every time nonce is used (encrypt/decrypt)
-        counter += 1;
-
         return ciphertext;
     }
 
@@ -193,9 +190,6 @@ public class ShadowChaChaCipher extends ShadowCipher {
                 additional, additional_length,
                 nonce, key.getEncoded()
         );
-
-        //increment counter every time nonce is used (encrypt/decrypt)
-        counter += 1;
 
         return plaintext;
     }
