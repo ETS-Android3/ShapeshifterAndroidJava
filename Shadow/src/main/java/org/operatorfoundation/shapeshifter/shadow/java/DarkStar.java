@@ -84,10 +84,6 @@ public class DarkStar {
         byte[] clientConfirmationCode = generateClientConfirmationCode(host, port, serverPersistentPublicKey, clientEphemeralPublicKey, clientEphemeralPrivateKey);
         salt = Utility.plusEqualsByteArray(salt, clientConfirmationCode);
 
-        System.out.println("(createSalt) clientEphemeralPublicKey: " + bytesToHex(clientEphemeralPublicKeyData));
-        System.out.println("(createSalt) clientConfirmationCode: " + bytesToHex(clientConfirmationCode));
-        System.out.println("(createSalt) salt: " + bytesToHex(salt));
-
         return salt;
     }
 
@@ -197,11 +193,6 @@ public class DarkStar {
         SecretKey ecdh2 = DarkStar.generateSharedSecret(clientEphemeral.getPrivate(), serverPersistentPublicKey);
         byte[] serverIdentifier = DarkStar.makeServerIdentifier(host, port);
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
-
-        System.out.println("ecdh1: " + bytesToHex(ecdh1.getEncoded()));
-        System.out.println("ecdh2: " + bytesToHex(ecdh2.getEncoded()));
-        System.out.println("SEPub: " + bytesToHex(publicKeyToBytes(serverEphemeralPublicKey)));
-
         digest.update(ecdh1.getEncoded());
         digest.update(ecdh2.getEncoded());
         digest.update(serverIdentifier);
@@ -228,12 +219,6 @@ public class DarkStar {
         byte[] serverIdentifier = makeServerIdentifier(host, port);
         byte[] serverEphemeralPublicKeyData = publicKeyToBytes(serverEphemeralPublicKey);
         byte[] clientEphemeralPublicKeyData = publicKeyToBytes(clientEphemeralPublicKey);
-
-        System.out.println("SCC1: " + bytesToHex(secretKeyData));
-        System.out.println("SCC2: " + bytesToHex(serverIdentifier));
-        System.out.println("SCC3: " + bytesToHex(serverEphemeralPublicKeyData));
-        System.out.println("SCC4: " + bytesToHex(clientEphemeralPublicKeyData));
-
         SecretKeySpec secretKeySpec = new SecretKeySpec(secretKeyData, "HmacSHA256");
         Mac mac = Mac.getInstance("HmacSHA256");
         mac.init(secretKeySpec);
@@ -248,19 +233,11 @@ public class DarkStar {
 
     public static byte[] generateClientConfirmationCode(String host, int port, PublicKey serverPersistentPublicKey, PublicKey clientEphemeralPublicKey, PrivateKey clientEphemeralPrivateKey) throws NoSuchAlgorithmException, UnknownHostException {
         SecretKey sharedSecret = DarkStar.generateSharedSecret(clientEphemeralPrivateKey, serverPersistentPublicKey);
-        System.out.println("(clientConfirmationCode) SPPubKey: " + bytesToHex(publicKeyToBytes(serverPersistentPublicKey)));
-        System.out.println("(clientConfirmationCode) CEPubKey: " + bytesToHex(publicKeyToBytes(clientEphemeralPublicKey)));
-        System.out.println("(clientConfirmationCode) CEPrivKey: " + bytesToHex(clientEphemeralPrivateKey.getEncoded()));
         byte[] serverIdentifier = makeServerIdentifier(host, port);
         byte[] serverPersistentPublicKeyData = publicKeyToBytes(serverPersistentPublicKey);
         byte[] clientEphemeralPublicKeyData = publicKeyToBytes(clientEphemeralPublicKey);
 
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        System.out.println("(clientConfirmationCode) ecdhData: " + bytesToHex(sharedSecret.getEncoded()));
-        System.out.println("(clientConfirmationCode) serverIdentifier: " + bytesToHex(serverIdentifier));
-        System.out.println("(clientConfirmationCode) SPPubKey: " + bytesToHex(serverPersistentPublicKeyData));
-        System.out.println("(clientConfirmationCode) CEPubKey: " + bytesToHex(clientEphemeralPublicKeyData));
-
         digest.update(sharedSecret.getEncoded());
         digest.update(serverIdentifier);
         digest.update(serverPersistentPublicKeyData);
@@ -281,11 +258,6 @@ public class DarkStar {
     }
 
     public static PublicKey bytesToPublicKey(byte[] bytes) throws NoSuchAlgorithmException, InvalidKeySpecException {
-//        ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256r1");
-//        ECPoint point = ecSpec.getCurve().decodePoint(bytes);
-//        ECPublicKeySpec pubSpec = new ECPublicKeySpec(point, ecSpec);
-//        KeyFactory kf = KeyFactory.getInstance("EC", new BouncyCastleProvider());
-//        return kf.generatePublic(pubSpec);
         KeyFactory keyFactory = KeyFactory.getInstance("EC", new BouncyCastleProvider());
         ECParameterSpec ecSpec = ECNamedCurveTable.getParameterSpec("secp256r1");
         byte[] encodedPoint = new byte[33];
