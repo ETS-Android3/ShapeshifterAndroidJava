@@ -13,6 +13,8 @@ import org.operatorfoundation.shapeshifter.shadow.java.ShadowSocket;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.spec.InvalidKeySpecException;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -81,7 +83,7 @@ public class ExampleInstrumentedTest {
     }
 
     @Test
-    public void shadowSocketDemoServerTest() throws IOException, NoSuchAlgorithmException {
+    public void shadowSocketDemoServerTest() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
         ShadowConfig config = new ShadowConfig("1234", "AES-128-GCM");
         ShadowSocket shadowSocket = new ShadowSocket(config, "", 2346);
         assertNotNull(shadowSocket);
@@ -94,7 +96,7 @@ public class ExampleInstrumentedTest {
     }
 
     @Test
-    public void shadowSocketDemoServerTestChaCha() throws IOException, NoSuchAlgorithmException {
+    public void shadowSocketDemoServerTestChaCha() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
 
         Sodium sodium = NaCl.sodium();
 
@@ -112,7 +114,7 @@ public class ExampleInstrumentedTest {
     }
 
     @Test
-    public void badBufferSizeTest() throws IOException, NoSuchAlgorithmException {
+    public void badBufferSizeTest() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
         ShadowConfig config = new ShadowConfig("1234", "AES-128-GCM");
         ShadowSocket shadowSocket = new ShadowSocket(config, "", 2346);
         assertNotNull(shadowSocket);
@@ -125,7 +127,7 @@ public class ExampleInstrumentedTest {
     }
 
     @Test(expected = IOException.class)
-    public void wrongServerConfigTest() throws IOException, NoSuchAlgorithmException {
+    public void wrongServerConfigTest() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
         ShadowConfig config = new ShadowConfig("1234", "AES-128-GCM");
         ShadowSocket shadowSocket = new ShadowSocket(config, "", 2345);
         assertNotNull(shadowSocket);
@@ -138,7 +140,7 @@ public class ExampleInstrumentedTest {
     }
 
     @Test
-    public void shadowDarkStarServerTest() throws IOException, NoSuchAlgorithmException {
+    public void shadowDarkStarServerTest() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
         ShadowConfig config = new ShadowConfig("3059301306072A8648CE3D020106082A8648CE3D030107034200041FF393BB8D976A5098F4D88853F7EA7A47DF7E1717A7E18084F3E3CA8D0FA9ACFB0F0E18801638712006B041880C0A15D227614E255728FF06EC8B7E466E19D4", "DarkStar");
         ShadowSocket shadowSocket = new ShadowSocket(config, "127.0.0.1", 1234);
         assertNotNull(shadowSocket);

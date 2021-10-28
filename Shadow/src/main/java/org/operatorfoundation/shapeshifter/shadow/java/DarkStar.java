@@ -2,13 +2,17 @@ package org.operatorfoundation.shapeshifter.shadow.java;
 
 import android.util.Log;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
+import org.bouncycastle.jce.ECNamedCurveTable;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
+import org.bouncycastle.jce.spec.ECParameterSpec;
+import org.bouncycastle.jce.spec.ECPublicKeySpec;
+import org.bouncycastle.math.ec.ECPoint;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.KeyFactory;
@@ -16,10 +20,8 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
@@ -30,21 +32,9 @@ import javax.crypto.Mac;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
-import org.bouncycastle.jce.ECNamedCurveTable;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.jce.spec.ECNamedCurveParameterSpec;
-import org.bouncycastle.jce.spec.ECParameterSpec;
-import org.bouncycastle.jce.spec.ECPublicKeySpec;
-import org.bouncycastle.math.ec.*;
-
 
 public class DarkStar {
-    public static byte[] iv = new SecureRandom().generateSeed(16);
-    public static int P256KeySize = 32;
-    public static int ConfirmationSize = 32;
     public SecretKey sharedKeyClient;
-    public SecretKey decryptKey;
     static byte[] darkStarBytes = "DarkStar".getBytes();
     static byte[] clientStringBytes = "client".getBytes();
     static byte[] serverStringBytes = "server".getBytes();
@@ -60,7 +50,7 @@ public class DarkStar {
         this.port = port;
     }
 
-    public byte[] createSalt() throws NoSuchAlgorithmException, InvalidKeySpecException, UnknownHostException, NoSuchProviderException {
+    public byte[] createSalt() throws NoSuchAlgorithmException, InvalidKeySpecException, UnknownHostException {
         // take ServerPersistentPublicKey out of password string
         byte[] serverPersistentPublicKeyData = hexToBytes(config.password);
         this.serverPersistentPublicKey = bytesToPublicKey(serverPersistentPublicKeyData);
@@ -77,8 +67,7 @@ public class DarkStar {
         }
 
         // convert the public key into data to be sent to the server
-        byte[] clientEphemeralPublicKeyData = publicKeyToBytes(clientEphemeralPublicKey);
-        byte[] salt = clientEphemeralPublicKeyData;
+        byte[] salt = publicKeyToBytes(clientEphemeralPublicKey);
 
         // Generate client confirmation code
         byte[] clientConfirmationCode = generateClientConfirmationCode(host, port, serverPersistentPublicKey, clientEphemeralPublicKey, clientEphemeralPrivateKey);
@@ -162,10 +151,8 @@ public class DarkStar {
             keyAgreement.init(privateKey);
             keyAgreement.doPhase(publicKey, true);
 
-            SecretKey key = keyAgreement.generateSecret("secp256r1");
-            return key;
+            return keyAgreement.generateSecret("secp256r1");
         } catch (InvalidKeyException | NoSuchAlgorithmException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             return null;
         }
@@ -177,8 +164,12 @@ public class DarkStar {
         SecretKey ecdh2 = DarkStar.generateSharedSecret(serverPersistent.getPrivate(), clientEphemeralPublicKey);
         byte[] serverIdentifier = DarkStar.makeServerIdentifier(host, port);
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        digest.update(ecdh1.getEncoded());
-        digest.update(ecdh2.getEncoded());
+        if (ecdh1 != null) {
+            digest.update(ecdh1.getEncoded());
+        }
+        if (ecdh2 != null) {
+            digest.update(ecdh2.getEncoded());
+        }
         digest.update(serverIdentifier);
         digest.update(publicKeyToBytes(clientEphemeralPublicKey));
         digest.update(publicKeyToBytes(serverEphemeral.getPublic()));
@@ -193,8 +184,12 @@ public class DarkStar {
         SecretKey ecdh2 = DarkStar.generateSharedSecret(clientEphemeral.getPrivate(), serverPersistentPublicKey);
         byte[] serverIdentifier = DarkStar.makeServerIdentifier(host, port);
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        digest.update(ecdh1.getEncoded());
-        digest.update(ecdh2.getEncoded());
+        if (ecdh1 != null) {
+            digest.update(ecdh1.getEncoded());
+        }
+        if (ecdh2 != null) {
+            digest.update(ecdh2.getEncoded());
+        }
         digest.update(serverIdentifier);
         digest.update(publicKeyToBytes(clientEphemeral.getPublic()));
         digest.update(publicKeyToBytes(serverEphemeralPublicKey));
@@ -238,7 +233,9 @@ public class DarkStar {
         byte[] clientEphemeralPublicKeyData = publicKeyToBytes(clientEphemeralPublicKey);
 
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        digest.update(sharedSecret.getEncoded());
+        if (sharedSecret != null) {
+            digest.update(sharedSecret.getEncoded());
+        }
         digest.update(serverIdentifier);
         digest.update(serverPersistentPublicKeyData);
         digest.update(clientEphemeralPublicKeyData);
@@ -270,7 +267,7 @@ public class DarkStar {
 
     public static String bytesToHex(byte[] data, int length) {
         String digits = "0123456789ABCDEF";
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
 
         for (int i = 0; i != length; i++) {
             int v = data[i] & 0xff;

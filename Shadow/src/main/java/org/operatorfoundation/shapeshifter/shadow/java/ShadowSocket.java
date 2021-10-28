@@ -16,8 +16,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
 
-import javax.crypto.NoSuchPaddingException;
-
 // This class implements client sockets (also called just "sockets").
 public class ShadowSocket extends Socket {
     // Fields:
@@ -31,7 +29,7 @@ public class ShadowSocket extends Socket {
     byte[] clientSalt;
     DarkStar darkStar;
 
-    public ShadowSocket(ShadowConfig config) throws NoSuchAlgorithmException {
+    public ShadowSocket(ShadowConfig config) {
         this.config = config;
     }
 
@@ -66,7 +64,7 @@ public class ShadowSocket extends Socket {
     }
 
     // Creates a socket and connects it to the specified remote host on the specified remote port.
-    public ShadowSocket(ShadowConfig config, String host, int port, InetAddress localAddr, int localPort) throws IOException, NoSuchAlgorithmException {
+    public ShadowSocket(ShadowConfig config, String host, int port, InetAddress localAddr, int localPort) throws IOException {
         this(config);
         socket = new Socket(host, port, localAddr, localPort);
         connectionStatus = true;
@@ -74,7 +72,7 @@ public class ShadowSocket extends Socket {
     }
 
     // Creates a stream socket and connects it to the specified port number at the specified IP address.
-    public ShadowSocket(ShadowConfig config, InetAddress address, int port) throws IOException, NoSuchAlgorithmException {
+    public ShadowSocket(ShadowConfig config, InetAddress address, int port) throws IOException {
         this(config);
         socket = new Socket(address, port);
         connectionStatus = true;
@@ -82,7 +80,7 @@ public class ShadowSocket extends Socket {
     }
 
     // Creates a socket and connects it to the specified remote address on the specified remote port.
-    public ShadowSocket(ShadowConfig config, InetAddress address, int port, InetAddress localAddr, int localPort) throws IOException, NoSuchAlgorithmException {
+    public ShadowSocket(ShadowConfig config, InetAddress address, int port, InetAddress localAddr, int localPort) throws IOException {
         this(config);
         socket = new Socket(address, port, localAddr, localPort);
         connectionStatus = true;
@@ -90,7 +88,7 @@ public class ShadowSocket extends Socket {
     }
 
     // Creates an unconnected socket, specifying the type of proxy, if any, that should be used regardless of any other settings.
-    public ShadowSocket(ShadowConfig config, Proxy proxy) throws InvalidKeyException, NoSuchPaddingException, NoSuchAlgorithmException {
+    public ShadowSocket(ShadowConfig config, Proxy proxy) {
         this(config);
         socket = new Socket(proxy);
     }
