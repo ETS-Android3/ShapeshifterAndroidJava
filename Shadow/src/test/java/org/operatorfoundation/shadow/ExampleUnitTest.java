@@ -15,13 +15,16 @@ import org.junit.Test;
 import org.operatorfoundation.shapeshifter.shadow.java.DarkStar;
 import org.operatorfoundation.shapeshifter.shadow.java.ShadowConfig;
 import org.operatorfoundation.shapeshifter.shadow.java.ShadowSocket;
+import org.operatorfoundation.shapeshifter.shadow.java.ShadowSocketFactory;
 import org.operatorfoundation.shapeshifter.shadow.java.TestServer;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.SocketAddress;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
@@ -38,6 +41,7 @@ import java.security.spec.AlgorithmParameterSpec;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.TreeSet;
+import java.util.UUID;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -442,5 +446,16 @@ public class ExampleUnitTest {
         byte[] pubKeyBytes = hexToBytes(pubkeyString);
         PublicKey pubKey = bytesToPublicKey(pubKeyBytes);
         assertNotNull(pubKey);
+    }
+
+    @Test
+    public void sipTest() throws IOException {
+        TestServer myRunnable = new TestServer();
+        Thread thread = new Thread(myRunnable);
+        thread.start();
+        URL url = new URL("https://raw.githubusercontent.com/OperatorFoundation/ShadowSwift/main/Tests/ShadowSwiftTests/testsip008.json");
+        UUID uuid = UUID.fromString("27b8a625-4f4b-4428-9f0f-8a2317db7c79");
+        ShadowSocketFactory factory = new ShadowSocketFactory(url, uuid);
+        factory.createSocket();
     }
 }
