@@ -1,4 +1,0 @@
-org/operatorfoundation/shadow/ExampleUnitTest.java
- org.operatorfoundation.shadow.ExampleUnitTest
-org/operatorfoundation/shadow/ShadowSocketTest.java
- org.operatorfoundation.shadow.ShadowSocketTest
