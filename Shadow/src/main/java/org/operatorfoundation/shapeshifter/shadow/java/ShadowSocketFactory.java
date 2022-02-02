@@ -68,6 +68,10 @@ public class ShadowSocketFactory extends SocketFactory {
         JsonConfig.ServerConfig serverConfig = jsonConfig.servers.get(0);
 
         if (UUID.fromString(serverConfig.id) != uuid) {
+            // FIXME: next 2 lines for debugging only
+            System.out.println("serverConfig uuid string: " + serverConfig.id);
+            System.out.println("provided uuid string:     " + uuid.toString());
+
             System.out.println("uuid does not match");
         }
 
@@ -121,7 +125,7 @@ public class ShadowSocketFactory extends SocketFactory {
     @Override
     public Socket createSocket() throws IOException {
         try {
-            return new OKHTTPShadowSocket(shadowConfig, shadowHost, shadowPort);
+            return new ShadowSocket(shadowConfig, shadowHost, shadowPort);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchProviderException e) {
             e.printStackTrace();
             throw new IOException();

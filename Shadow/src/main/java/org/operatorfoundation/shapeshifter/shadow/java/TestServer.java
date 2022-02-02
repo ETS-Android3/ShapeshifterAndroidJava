@@ -14,7 +14,7 @@ public class TestServer implements Runnable {
     @Override
     public void run() {
         try {
-            ServerSocket testServer = new ServerSocket(3333);
+            ServerSocket testServer = new ServerSocket(1234);
             Socket socket = testServer.accept();
             readNBytes(socket.getInputStream(), 2);
             socket.getOutputStream().write("Yo".getBytes());

@@ -15,6 +15,8 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
+import com.google.common.hash.BloomFilter;
+import java.io.FileOutputStream;
 
 // This class implements client sockets (also called just "sockets").
 public class ShadowSocket extends Socket {
@@ -28,6 +30,9 @@ public class ShadowSocket extends Socket {
     int port;
     byte[] clientSalt;
     DarkStar darkStar;
+    static Bloom bloom = new Bloom();
+    Hole hole = new Hole();
+    int holeTimeout = 30;
 
     public ShadowSocket(ShadowConfig config) {
         this.config = config;
@@ -52,13 +57,21 @@ public class ShadowSocket extends Socket {
         if (config.cipherMode.equals(CipherMode.DarkStar)) {
             socket = new Socket(host, port);
             connectionStatus = true;
-            handshake();
+             try {
+                 handshake();
+             } catch(IOException error) {
+                 hole.startHole(holeTimeout, socket);
+            }
             encryptionCipher = darkStar.makeEncryptionCipher();
         } else {
             encryptionCipher = ShadowCipher.makeShadowCipherWithSalt(config, this.clientSalt);
             socket = new Socket(host, port);
             connectionStatus = true;
-            handshake();
+            try {
+                handshake();
+            } catch(IOException error) {
+                hole.startHole(holeTimeout, socket);
+            }
         }
         Log.i("init", "Encryption cipher created.");
     }
@@ -68,7 +81,11 @@ public class ShadowSocket extends Socket {
         this(config);
         socket = new Socket(host, port, localAddr, localPort);
         connectionStatus = true;
-        handshake();
+        try {
+            handshake();
+        } catch(IOException error) {
+            hole.startHole(holeTimeout, socket);
+        }
     }
 
     // Creates a stream socket and connects it to the specified port number at the specified IP address.
@@ -76,7 +93,11 @@ public class ShadowSocket extends Socket {
         this(config);
         socket = new Socket(address, port);
         connectionStatus = true;
-        handshake();
+        try {
+            handshake();
+        } catch(IOException error) {
+            hole.startHole(holeTimeout, socket);
+        }
     }
 
     // Creates a socket and connects it to the specified remote address on the specified remote port.
@@ -84,7 +105,11 @@ public class ShadowSocket extends Socket {
         this(config);
         socket = new Socket(address, port, localAddr, localPort);
         connectionStatus = true;
-        handshake();
+        try {
+            handshake();
+        } catch(IOException error) {
+            hole.startHole(holeTimeout, socket);
+        }
     }
 
     // Creates an unconnected socket, specifying the type of proxy, if any, that should be used regardless of any other settings.
@@ -328,6 +353,10 @@ public class ShadowSocket extends Socket {
         int saltSize = ShadowCipher.determineSaltSize(this.config);
         byte[] result = Utility.readNBytes(socket.getInputStream(), saltSize);
         if (result != null && result.length == this.clientSalt.length) {
+            if (bloom.checkBloom(result)) {
+                Log.e("receiveSalt", "duplicate salt found");
+                throw new IOException();
+            }
             if (config.cipherMode.equals(CipherMode.DarkStar)) {
                 decryptionCipher = darkStar.makeDecryptionCipher(result);
                 encryptionCipher = darkStar.makeEncryptionCipher();
@@ -339,5 +368,12 @@ public class ShadowSocket extends Socket {
             Log.e("receiveSalt", "Salt was not received.");
             throw new IOException();
         }
+    }
+
+    static void saveBloom(String fileName) throws IOException {
+        bloom.save(fileName);
+    }
+    static void loadBloom(String fileName) throws IOException {
+        bloom.load(fileName);
     }
 }
