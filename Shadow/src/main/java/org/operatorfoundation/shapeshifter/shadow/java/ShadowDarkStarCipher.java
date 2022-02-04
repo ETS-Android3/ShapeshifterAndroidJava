@@ -2,6 +2,10 @@ package org.operatorfoundation.shapeshifter.shadow.java;
 
 import android.util.Log;
 
+import com.google.common.primitives.UnsignedLong;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -15,7 +19,9 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
 public class ShadowDarkStarCipher extends ShadowCipher {
-SecretKey key;
+    SecretKey key;
+    UnsignedLong longCounter = UnsignedLong.ZERO;
+
 
     // ShadowCipher contains the encryption and decryption methods.
     public ShadowDarkStarCipher(SecretKey key) throws NoSuchAlgorithmException {
@@ -48,9 +54,12 @@ SecretKey key;
 
     // [encrypted payload length][length tag] + [encrypted payload][payload tag]
     // Pack takes the data above and packs them into a singular byte array.
-    public byte[] pack(byte[] plaintext) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+    public byte[] pack(byte[] plaintext) throws Exception {
         // find the length of plaintext
         int plaintextLength = plaintext.length;
+        if (plaintextLength > Short.MAX_VALUE) {
+            throw new IllegalBlockSizeException();
+        }
 
         // turn the length into two shorts and put them into an array
         // this is encoded in big endian
@@ -69,7 +78,7 @@ SecretKey key;
     }
 
     // Encrypts the data and increments the nonce counter.
-    byte[] encrypt(byte[] plaintext) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+    byte[] encrypt(byte[] plaintext) throws Exception {
         AlgorithmParameterSpec ivSpec;
         byte[] nonce = nonce();
         ivSpec = new GCMParameterSpec(tagSizeBits, nonce);
@@ -79,12 +88,31 @@ SecretKey key;
     }
 
     // Decrypts data and increments the nonce counter.
-    public byte[] decrypt(byte[] encrypted) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException {
+    public byte[] decrypt(byte[] encrypted) throws Exception {
         AlgorithmParameterSpec ivSpec;
         byte[] nonce = nonce();
         ivSpec = new GCMParameterSpec(tagSizeBits, nonce);
         cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
 
         return cipher.doFinal(encrypted);
+    }
+
+    @Override
+    public byte[] nonce() throws Exception {
+        ByteBuffer buffer = ByteBuffer.allocate(12);
+        buffer.order(ByteOrder.BIG_ENDIAN);
+        buffer.put((byte) 0x1A);
+        buffer.put((byte) 0x1A);
+        buffer.put((byte) 0x1A);
+        buffer.put((byte) 0x1A);
+        buffer.putLong(longCounter.longValue());
+        Log.i("nonce", "Nonce created. Counter is " + longCounter);
+        if (longCounter.compareTo(UnsignedLong.MAX_VALUE) == -1) {  // a < b = -1   a > b = 0
+            longCounter.plus(UnsignedLong.ONE);
+        } else {
+            throw new Exception("64 bit nonce counter overflow");
+        }
+
+        return buffer.array();
     }
 }

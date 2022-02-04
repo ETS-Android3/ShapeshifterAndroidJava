@@ -114,16 +114,16 @@ public abstract class ShadowCipher {
 
     // [encrypted payload length][length tag] + [encrypted payload][payload tag]
     // Pack takes the data above and packs them into a singular byte array.
-    public abstract byte[] pack(byte[] plaintext) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException;
+    public abstract byte[] pack(byte[] plaintext) throws Exception;
 
     // Encrypts the data and increments the nonce counter.
-    abstract byte[] encrypt(byte[] plaintext) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException;
+    abstract byte[] encrypt(byte[] plaintext) throws Exception;
 
     // Decrypts data and increments the nonce counter.
-    public abstract byte[] decrypt(byte[] encrypted) throws InvalidAlgorithmParameterException, InvalidKeyException, BadPaddingException, IllegalBlockSizeException;
+    public abstract byte[] decrypt(byte[] encrypted) throws Exception;
 
     // Create a nonce using our counter.
-    public byte[] nonce() {
+    public byte[] nonce() throws Exception {
         // nonce must be 12 bytes
         ByteBuffer buffer = ByteBuffer.allocate(12);
         // nonce is little Endian

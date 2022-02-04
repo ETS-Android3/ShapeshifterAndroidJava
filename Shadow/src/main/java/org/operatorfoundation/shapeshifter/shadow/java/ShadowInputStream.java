@@ -1,16 +1,14 @@
 package org.operatorfoundation.shapeshifter.shadow.java;
 
+import android.os.Build;
 import android.util.Log;
+
+import androidx.annotation.RequiresApi;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.util.Arrays;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
 
 // This abstract class is the superclass of all classes representing an input stream of bytes.
 public class ShadowInputStream extends InputStream {
@@ -34,6 +32,7 @@ public class ShadowInputStream extends InputStream {
     }
 
     // Reads some number of bytes from the input stream and stores them into the buffer array b.
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public int read(byte[] b) throws IOException {
         if (decryptionFailed) {
@@ -70,10 +69,11 @@ public class ShadowInputStream extends InputStream {
         try {
             lengthData = decryptionCipher.decrypt(encryptedLengthData);
             Log.i("read", "Length bytes decrypted.");
-        } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             decryptionFailed = true;
             Log.e("read", "Decryption failed on read.");
+            shadowSocket.hole.startHole(shadowSocket.holeTimeout, shadowSocket);
             shadowSocket.close();
             throw new IOException();
         }
@@ -99,7 +99,7 @@ public class ShadowInputStream extends InputStream {
         try {
             payload = decryptionCipher.decrypt(encryptedPayload);
             Log.i("read", "Payload decrypted.");
-        } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             decryptionFailed = true;
             Log.e("read", "Decryption failed on read.");
@@ -118,6 +118,7 @@ public class ShadowInputStream extends InputStream {
         return resultSize;
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
         if (b != null && b.length != 0) {
@@ -131,6 +132,7 @@ public class ShadowInputStream extends InputStream {
     }
 
     // Reads the next byte of data from the input stream.
+    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public int read() throws IOException {
         byte[] result = new byte[0];
