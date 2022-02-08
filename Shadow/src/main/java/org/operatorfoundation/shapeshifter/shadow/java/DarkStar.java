@@ -86,7 +86,7 @@ public class DarkStar {
         System.arraycopy(salt, 32, confirmationCodeBuf, 0, 32);
     }
 
-    public ShadowCipher makeDecryptionCipher(byte[] salt) throws InvalidKeySpecException, NoSuchAlgorithmException, UnknownHostException, InvalidKeyException {
+    public ShadowCipher makeCipher(boolean isClient, byte[] salt) throws InvalidKeySpecException, NoSuchAlgorithmException, UnknownHostException, InvalidKeyException {
 
         byte[] serverEphemeralPublicKeyData = new byte[32];
         byte[] serverConfirmationCode = new byte[32];
@@ -97,7 +97,13 @@ public class DarkStar {
         PublicKey serverEphemeralPublicKey = bytesToPublicKey(serverEphemeralPublicKeyData);
 
         // derive shared keys
-        sharedKeyClient = generateSharedKeyClient(host, port, clientEphemeralKeyPair, serverEphemeralPublicKey, serverPersistentPublicKey);
+        SecretKey sharedKey = generateSharedKey(isClient, host, port, clientEphemeralKeyPair, serverEphemeralPublicKey, serverPersistentPublicKey);
+
+        if (isClient) {
+            sharedKeyClient = sharedKey;
+        } else {
+            sharedKeyServer = sharedKey;
+        }
 
         // check confirmationCode
         byte[] clientCopyServerConfirmationCode = generateServerConfirmationCode(host, port, clientEphemeralKeyPair.getPublic(), clientEphemeralKeyPair.getPrivate(), serverPersistentPublicKey);
@@ -106,10 +112,6 @@ public class DarkStar {
         }
 
         return new ShadowDarkStarCipher(sharedKeyClient);
-    }
-
-    public ShadowCipher makeEncryptionCipher() throws NoSuchAlgorithmException {
-        return new ShadowDarkStarCipher(sharedKeyServer);
     }
 
     public static KeyPair generateECKeys() {
@@ -136,8 +138,7 @@ public class DarkStar {
             PrivateKey privateKey = keyFactory.generatePrivate(spec);
 
             byte[] publicKeyBytes = hexToBytes(publicKeyString);
-            X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
-            PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
+            PublicKey publicKey = bytesToPublicKey(publicKeyBytes);
 
             return new KeyPair(publicKey, privateKey);
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {
@@ -159,7 +160,7 @@ public class DarkStar {
         }
     }
 
-    public static SecretKey generateSharedKeyClient(String host, int port, KeyPair clientEphemeral, PublicKey serverEphemeralPublicKey, PublicKey serverPersistentPublicKey) throws UnknownHostException, NoSuchAlgorithmException {
+    public static SecretKey generateSharedKey(boolean isClient, String host, int port, KeyPair clientEphemeral, PublicKey serverEphemeralPublicKey, PublicKey serverPersistentPublicKey) throws UnknownHostException, NoSuchAlgorithmException {
         SecretKey ecdh1 = DarkStar.generateSharedSecret(clientEphemeral.getPrivate(), serverEphemeralPublicKey);
         SecretKey ecdh2 = DarkStar.generateSharedSecret(clientEphemeral.getPrivate(), serverPersistentPublicKey);
         byte[] serverIdentifier = DarkStar.makeServerIdentifier(host, port);
@@ -174,28 +175,11 @@ public class DarkStar {
         digest.update(publicKeyToBytes(clientEphemeral.getPublic()));
         digest.update(publicKeyToBytes(serverEphemeralPublicKey));
         digest.update(darkStarBytes);
-        digest.update(clientStringBytes);
-        byte[] result = digest.digest();
-
-        return new SecretKeySpec(result, 0, result.length, "AES");
-    }
-
-    public static SecretKey generateSharedKeyServer(String host, int port, KeyPair clientEphemeral, PublicKey serverEphemeralPublicKey, PublicKey serverPersistentPublicKey) throws UnknownHostException, NoSuchAlgorithmException {
-        SecretKey ecdh1 = DarkStar.generateSharedSecret(clientEphemeral.getPrivate(), serverEphemeralPublicKey);
-        SecretKey ecdh2 = DarkStar.generateSharedSecret(clientEphemeral.getPrivate(), serverPersistentPublicKey);
-        byte[] serverIdentifier = DarkStar.makeServerIdentifier(host, port);
-        MessageDigest digest = MessageDigest.getInstance("SHA-256");
-        if (ecdh1 != null) {
-            digest.update(ecdh1.getEncoded());
+        if (isClient) {
+            digest.update(clientStringBytes);
+        } else {
+            digest.update(serverStringBytes);
         }
-        if (ecdh2 != null) {
-            digest.update(ecdh2.getEncoded());
-        }
-        digest.update(serverIdentifier);
-        digest.update(publicKeyToBytes(clientEphemeral.getPublic()));
-        digest.update(publicKeyToBytes(serverEphemeralPublicKey));
-        digest.update(darkStarBytes);
-        digest.update(serverStringBytes);
         byte[] result = digest.digest();
 
         return new SecretKeySpec(result, 0, result.length, "AES");

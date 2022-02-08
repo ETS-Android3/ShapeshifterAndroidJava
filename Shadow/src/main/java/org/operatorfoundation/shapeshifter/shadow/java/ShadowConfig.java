@@ -12,26 +12,7 @@ public class ShadowConfig {
         this.password = password;
         this.cipherName = cipherName;
 
-        CipherMode maybeMode = null;
-
-        switch (cipherName) {
-            case "AES-128-GCM":
-                maybeMode = CipherMode.AES_128_GCM;
-                break;
-
-            case "AES-256-GCM":
-                maybeMode = CipherMode.AES_256_GCM;
-                break;
-
-            case "CHACHA20-IETF-POLY1305":
-                maybeMode = CipherMode.CHACHA20_IETF_POLY1305;
-                break;
-
-            case "DarkStar":
-                maybeMode = CipherMode.DarkStar;
-
-        }
-
+        CipherMode maybeMode = CipherMode.DarkStar;
         if (maybeMode == null) {
             Log.e("ShadowConfig", "Invalid cipherMode in the config: $cipherName");
             throw new IllegalArgumentException();

@@ -6,12 +6,9 @@ import com.google.common.primitives.UnsignedLong;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.AlgorithmParameterSpec;
 
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
@@ -40,16 +37,6 @@ public class ShadowDarkStarCipher extends ShadowCipher {
         // FIXME: Actually refactor this function
         //DarkStar.generateSharedKeyClient(config.cipherName, config.password, salt);
         return null;
-    }
-
-    @Override
-    public SecretKey hkdfSha1(ShadowConfig config, byte[] salt, byte[] psk) {
-        return null;
-    }
-
-    @Override
-    public byte[] kdf(ShadowConfig config) throws NoSuchAlgorithmException {
-        return new byte[0];
     }
 
     // [encrypted payload length][length tag] + [encrypted payload][payload tag]
@@ -99,16 +86,66 @@ public class ShadowDarkStarCipher extends ShadowCipher {
 
     @Override
     public byte[] nonce() throws Exception {
+        // NIST Special Publication 800-38D - Recommendation for Block Cipher Modes of Operation: Galois/Counter Mode (GCM) and GMAC
+        // https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf
+        // Section 8.2.1 - Deterministic Construction
+        // Applicable to nonces of 96 bytes or less.
+
+        /*
+         In the deterministic construction, the IV is the concatenation of two
+         fields, called the fixed field and the invocation field. The fixed field
+         shall identify the device, or, more generally, the context for the
+         instance of the authenticated encryption function. The invocation field
+         shall identify the sets of inputs to the authenticated encryption
+         function in that particular device.
+
+         For any given key, no two distinct devices shall share the same fixed
+         field, and no two distinct sets of inputs to any single device shall
+         share the same invocation field. Compliance with these two requirements
+         implies compliance with the uniqueness requirement on IVs in Sec. 8.
+
+         If desired, the fixed field itself may be constructed from two or more
+         smaller fields. Moreover, one of those smaller fields could consist of
+         bits that are arbitrary (i.e., not necessarily deterministic nor unique
+         to the device), as long as the remaining bits ensure that the fixed
+         field is not repeated in its entirety for some other device with the
+         same key.
+
+         Similarly, the entire fixed field may consist of arbitrary bits when
+         there is only one context to identify, such as when a fresh key is
+         limited to a single session of a communications protocol. In this case,
+         if different participants in the session share a common fixed field,
+         then the protocol shall ensure that the invocation fields are distinct
+         for distinct data inputs.
+        */
+
         ByteBuffer buffer = ByteBuffer.allocate(12);
         buffer.order(ByteOrder.BIG_ENDIAN);
         buffer.put((byte) 0x1A);
         buffer.put((byte) 0x1A);
         buffer.put((byte) 0x1A);
         buffer.put((byte) 0x1A);
+        /*
+         The invocation field typically is either 1) an integer counter or 2) a
+         linear feedback shift register that is driven by a primitive polynomial
+         to ensure a maximal cycle length. In either case, the invocation field
+         increments upon each invocation of the authenticated encryption
+         function.
+
+         The lengths and positions of the fixed field and the invocation field
+         shall be fixed for each supported IV length for the life of the key. In
+         order to promote interoperability for the default IV length of 96 bits,
+         this Recommendation suggests, but does not require, that the leading
+         (i.e., leftmost) 32 bits of the IV hold the fixed field; and that the
+         trailing (i.e., rightmost) 64 bits hold the invocation field.
+        */
+
         buffer.putLong(longCounter.longValue());
         Log.i("nonce", "Nonce created. Counter is " + longCounter);
+        System.out.println("key: " + key.getEncoded() + "counter: " + longCounter);
         if (longCounter.compareTo(UnsignedLong.MAX_VALUE) == -1) {  // a < b = -1   a > b = 0
-            longCounter.plus(UnsignedLong.ONE);
+            longCounter = longCounter.plus(UnsignedLong.ONE);
+            System.out.println("key: " + key.getEncoded() + "counter: " + longCounter);
         } else {
             throw new Exception("64 bit nonce counter overflow");
         }

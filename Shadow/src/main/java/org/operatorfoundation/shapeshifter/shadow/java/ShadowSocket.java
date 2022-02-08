@@ -15,8 +15,6 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
-import com.google.common.hash.BloomFilter;
-import java.io.FileOutputStream;
 
 // This class implements client sockets (also called just "sockets").
 public class ShadowSocket extends Socket {
@@ -46,32 +44,16 @@ public class ShadowSocket extends Socket {
         this.port = port;
 
         // Create salt for encryptionCipher
-        if (config.cipherMode.equals(CipherMode.DarkStar)) {
-            darkStar = new DarkStar(config, host, port);
-            this.clientSalt = darkStar.createSalt();
-        } else {
-            this.clientSalt = ShadowCipher.createSalt(config);
-        }
+        darkStar = new DarkStar(config, host, port);
+        this.clientSalt = darkStar.createSalt();
 
         // Create an encryptionCipher
-        if (config.cipherMode.equals(CipherMode.DarkStar)) {
-            socket = new Socket(host, port);
-            connectionStatus = true;
-             try {
-                 handshake();
-             } catch(IOException error) {
-                 hole.startHole(holeTimeout, socket);
-            }
-            encryptionCipher = darkStar.makeEncryptionCipher();
-        } else {
-            encryptionCipher = ShadowCipher.makeShadowCipherWithSalt(config, this.clientSalt);
-            socket = new Socket(host, port);
-            connectionStatus = true;
-            try {
-                handshake();
-            } catch(IOException error) {
-                hole.startHole(holeTimeout, socket);
-            }
+        socket = new Socket(host, port);
+        connectionStatus = true;
+         try {
+             handshake();
+         } catch(IOException error) {
+             hole.startHole(holeTimeout, socket);
         }
         Log.i("init", "Encryption cipher created.");
     }
@@ -350,19 +332,15 @@ public class ShadowSocket extends Socket {
 
     // Receives the salt through the input stream.
     private void receiveSalt() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException, InvalidKeyException {
-        int saltSize = ShadowCipher.determineSaltSize(this.config);
+        int saltSize = ShadowCipher.determineSaltSize();
         byte[] result = Utility.readNBytes(socket.getInputStream(), saltSize);
         if (result != null && result.length == this.clientSalt.length) {
             if (bloom.checkBloom(result)) {
                 Log.e("receiveSalt", "duplicate salt found");
                 throw new IOException();
             }
-            if (config.cipherMode.equals(CipherMode.DarkStar)) {
-                decryptionCipher = darkStar.makeDecryptionCipher(result);
-                encryptionCipher = darkStar.makeEncryptionCipher();
-            } else {
-                decryptionCipher = ShadowCipher.makeShadowCipherWithSalt(config, result);
-            }
+            decryptionCipher = darkStar.makeCipher(true, result);
+            encryptionCipher = darkStar.makeCipher(false, result);
             Log.i("receiveSalt", "Salt received.");
         } else {
             Log.e("receiveSalt", "Salt was not received.");

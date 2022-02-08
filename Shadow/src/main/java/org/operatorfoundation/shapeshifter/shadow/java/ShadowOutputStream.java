@@ -1,6 +1,9 @@
 package org.operatorfoundation.shapeshifter.shadow.java;
 
+import android.os.Build;
 import android.util.Log;
+
+import androidx.annotation.RequiresApi;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -44,7 +47,7 @@ public class ShadowOutputStream extends OutputStream {
             buffer = Utility.plusEqualsByteArray(buffer, b);
             int offset = 0;
             while (offset < buffer.length) {
-                int numBytesToSend = Integer.min(ShadowCipher.maxPayloadSize, buffer.length - offset);
+                int numBytesToSend = Math.min(ShadowCipher.maxPayloadSize, buffer.length - offset);
 
                 // take bytes out of buffer
                 byte[] bytesToSend = new byte[numBytesToSend];
@@ -53,7 +56,7 @@ public class ShadowOutputStream extends OutputStream {
                 byte[] cipherText = new byte[0];
                 try {
                     cipherText = encryptionCipher.pack(bytesToSend);
-                } catch (InvalidAlgorithmParameterException | InvalidKeyException | BadPaddingException | IllegalBlockSizeException e) {
+                } catch (Exception e) {
                     Log.e("write", "Failed to pack bytes.");
                     e.printStackTrace();
                 }

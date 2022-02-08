@@ -28,88 +28,8 @@ public abstract class ShadowCipher {
     SecretKey key;
     int counter = 0;
 
-    static ShadowCipher makeShadowCipher(ShadowConfig config) throws NoSuchAlgorithmException {
-        switch (config.cipherMode) {
-            case AES_128_GCM:
-
-            case AES_256_GCM:
-                return new ShadowAESCipher(config);
-
-            case CHACHA20_IETF_POLY1305:
-                return new ShadowChaChaCipher(config);
-
-            default:
-                throw new IllegalStateException("Unexpected or unsupported Algorithm value");
-        }
-
-    }
-
-    static ShadowCipher makeShadowCipherWithSalt(ShadowConfig config, byte[] salt) throws NoSuchAlgorithmException {
-        switch (config.cipherMode) {
-            case AES_128_GCM:
-
-            case AES_256_GCM:
-                return new ShadowAESCipher(config, salt);
-            //break;
-
-            case CHACHA20_IETF_POLY1305:
-                return new ShadowChaChaCipher(config, salt);
-            //break;
-
-            default:
-                throw new IllegalStateException("Unexpected or unsupported Algorithm value");
-        }
-
-    }
-
-    static int determineSaltSize(ShadowConfig config) {
-        switch (config.cipherMode) {
-            case AES_128_GCM:
-                finalSaltSize = 16;
-                break;
-            case AES_256_GCM:
-            case CHACHA20_IETF_POLY1305:
-                finalSaltSize = 32;
-                break;
-            case DarkStar:
-                finalSaltSize = 32 + 32;
-                break;
-        }
-        Log.i("determineSaltSize", "Salt size is $finalSaltSize");
-        return finalSaltSize;
-    }
-
-    // Create a secret key using the two key derivation functions.
-    public abstract SecretKey createSecretKey(ShadowConfig config, byte[] salt) throws NoSuchAlgorithmException;
-
-    // Key derivation functions:
-    // Derives the secret key from the preshared key and adds the salt.
-    public abstract SecretKey hkdfSha1(ShadowConfig config, byte[] salt, byte[] psk);
-
-    // Derives the pre-shared key from the config.
-    public abstract byte[] kdf(ShadowConfig config) throws NoSuchAlgorithmException;
-
-    // Creates a byteArray of a specified length containing random bytes.
-    public static byte[] createSalt(ShadowConfig config) {
-        int saltSize;
-        switch (config.cipherMode) {
-            case AES_128_GCM:
-                saltSize = 16;
-                break;
-
-            case AES_256_GCM:
-            case CHACHA20_IETF_POLY1305:
-                saltSize = 32;
-                break;
-
-            default:
-                throw new IllegalStateException("Unexpected value: " + config.cipherMode);
-        }
-        byte[] salt = new byte[saltSize];
-        Random random = new java.security.SecureRandom();
-        random.nextBytes(salt);
-        Log.i("createSalt", "Salt created.");
-        return salt;
+    static int determineSaltSize() {
+        return 32 + 32;
     }
 
     // [encrypted payload length][length tag] + [encrypted payload][payload tag]
@@ -123,21 +43,5 @@ public abstract class ShadowCipher {
     public abstract byte[] decrypt(byte[] encrypted) throws Exception;
 
     // Create a nonce using our counter.
-    public byte[] nonce() throws Exception {
-        // nonce must be 12 bytes
-        ByteBuffer buffer = ByteBuffer.allocate(12);
-        // nonce is little Endian
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
-        // create a byte array from counter
-        buffer.putLong(counter);
-        buffer.put((byte) 0);
-        buffer.put((byte) 0);
-        buffer.put((byte) 0);
-        buffer.put((byte) 0);
-        Log.i("nonce", "Nonce created. Counter is $counter.");
-
-        counter += 1;
-
-        return buffer.array();
-    }
+    public abstract byte[] nonce() throws Exception;
 }
