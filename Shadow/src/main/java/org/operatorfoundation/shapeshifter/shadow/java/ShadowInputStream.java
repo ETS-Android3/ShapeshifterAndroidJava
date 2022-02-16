@@ -1,9 +1,6 @@
 package org.operatorfoundation.shapeshifter.shadow.java;
 
-import android.os.Build;
 import android.util.Log;
-
-import androidx.annotation.RequiresApi;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,7 +29,6 @@ public class ShadowInputStream extends InputStream {
     }
 
     // Reads some number of bytes from the input stream and stores them into the buffer array b.
-    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public int read(byte[] b) throws IOException {
         if (decryptionFailed) {
@@ -109,7 +105,7 @@ public class ShadowInputStream extends InputStream {
         // put payload into buffer
         buffer = Utility.plusEqualsByteArray(buffer, payload);
         assert b != null;
-        int resultSize = Integer.min(b.length, buffer.length);
+        int resultSize = Math.min(b.length, buffer.length);
 
         // take bytes out of buffer.
         System.arraycopy(buffer, 0, b, 0, resultSize);
@@ -118,7 +114,6 @@ public class ShadowInputStream extends InputStream {
         return resultSize;
     }
 
-    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
         if (b != null && b.length != 0) {
@@ -132,7 +127,6 @@ public class ShadowInputStream extends InputStream {
     }
 
     // Reads the next byte of data from the input stream.
-    @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
     public int read() throws IOException {
         byte[] result = new byte[0];
