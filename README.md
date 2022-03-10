@@ -16,7 +16,7 @@ allprojects {
 2) add the dependency in your MODULE's build.gradle:
 ```
 dependencies {
-        // Be sure to replace tag with the most recent version
+        // Be sure to replace TAG with the most recent version
         implementation 'com.github.OperatorFoundation:ShapeshifterAndroidJava:TAG'
 
         // Later releases of bouncycastle may not work with ShapeshifterAndroidJava
@@ -31,27 +31,42 @@ dependencies {
 3) Make sure the min SDK in your build.gradle is 21 or higher in each project/app related build.gradle
 
 ## Using the Library
-1) Create a shadow config, putting the password and cipher name.  If you're using DarkStar, put the Server's Persistent Public Key in place of the password.
+1) Create the Bloom Filter
 ```
-ShadowConfig config = new ShadowConfig("Password", "CipherName");
-```
-
-2) Make a Shadow Socket with the config, the host, and the port.
-```
-ShadowSocket shadowSocket = new ShadowSocket(config, "host", port);
+Bloom bloomFilter = new Bloom();
 ```
 
-3) Get the output stream and write some bytes.
+2) Load the Bloom Filter from the path given (include the file name)
+```
+bloomFilter.load(fileName);
+```   
+
+3) Create a shadow config, putting the password and cipher name. The Server's Persistent Public Key is used in place of the password.
+```
+ShadowConfig config = new ShadowConfig(password, cipherName);
+```
+
+4) Make a Shadow Socket with the config, the host, and the port.
+```
+ShadowSocket shadowSocket = new ShadowSocket(config, host, port);
+```
+
+5) Get the output stream and write some bytes.
 ```
 shadowSocket.getOutputStream().write(someBytes);
 ```
 
-4) Flush the output stream.
+6) Flush the output stream.
 ```
 shadowSocket.getOutputStream().flush();
 ```
 
-5) Get the input stream and read some bytes into an empty buffer.
+7) Get the input stream and read some bytes into an empty buffer.
 ```
-shadowSocket.getInputStream().read(buffer);
+shadowSocket.getInputStream().read(emptyBuffer);
+```
+
+8) Save the Bloom Filter to the path given at the end of the session (include file name)
+```
+bloomFilter.save(fileName)
 ```

@@ -1,16 +1,18 @@
 package org.operatorfoundation.shadow;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.bytesToHex;
+import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.bytesToPublicKey;
+import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.generateECKeys;
+import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.hexToBytes;
+
+import android.util.Log;
+
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
-import org.bouncycastle.jce.ECNamedCurveTable;
-import org.bouncycastle.jce.interfaces.ECPublicKey;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.jce.spec.ECParameterSpec;
-import org.bouncycastle.jce.spec.ECPublicKeySpec;
-import org.bouncycastle.math.ec.ECPoint;
 import org.junit.Test;
 import org.operatorfoundation.shapeshifter.shadow.java.DarkStar;
 import org.operatorfoundation.shapeshifter.shadow.java.ShadowConfig;
-import org.operatorfoundation.shapeshifter.shadow.java.ShadowDarkStarCipher;
 import org.operatorfoundation.shapeshifter.shadow.java.ShadowSocket;
 import org.operatorfoundation.shapeshifter.shadow.java.ShadowSocketFactory;
 import org.operatorfoundation.shapeshifter.shadow.java.TestServer;
@@ -18,30 +20,13 @@ import org.operatorfoundation.shapeshifter.shadow.java.TestServer;
 import java.io.IOException;
 import java.net.URL;
 import java.net.UnknownHostException;
-import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.UUID;
-
-import javax.crypto.SecretKey;
-import javax.security.cert.CertificateException;
-import javax.security.cert.X509Certificate;
-
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.bytesToHex;
-import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.bytesToPublicKey;
-import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.generateECKeys;
-import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.generateSharedKey;
-import static org.operatorfoundation.shapeshifter.shadow.java.DarkStar.hexToBytes;
-
-import android.util.Log;
 
 /**
  * Example local unit test, which will execute on the development machine (host).
