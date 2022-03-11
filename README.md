@@ -68,5 +68,5 @@ shadowSocket.getInputStream().read(emptyBuffer);
 
 8) Save the Bloom Filter to the path given at the end of the session (include file name)
 ```
-bloomFilter.save(fileName)
+bloomFilter.save(fileName);
 ```
