@@ -114,10 +114,5 @@ shadowSocket.getOutputStream().flush();
 shadowSocket.getInputStream().read(emptyBuffer);
 ```
 
-6) Save the Bloom Filter to the path given at the end of the session (include file name)
-```
-bloomFilter.save(fileName);
-```
-
 ### Credits
 * Shadowsocks was developed by the Shadowsocks team. [whitepaper](https://shadowsocks.org/assets/whitepaper.pdf)
