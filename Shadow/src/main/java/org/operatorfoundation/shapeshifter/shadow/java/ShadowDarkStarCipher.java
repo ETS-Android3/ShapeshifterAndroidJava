@@ -4,9 +4,12 @@ import android.util.Log;
 
 import com.google.common.primitives.UnsignedLong;
 
+import org.bouncycastle.jcajce.spec.AEADParameterSpec;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.spec.AlgorithmParameterSpec;
 
 import javax.crypto.Cipher;
@@ -25,9 +28,9 @@ public class ShadowDarkStarCipher extends ShadowCipher {
         this.key = key;
 
         try {
-            cipher = Cipher.getInstance("AES_256/GCM/NoPadding");
+            cipher = Cipher.getInstance("AES/GCM/NoPadding", "BC");
             saltSize = 32;
-        } catch (NoSuchPaddingException e) {
+        } catch (NoSuchPaddingException | NoSuchProviderException e) {
             e.printStackTrace();
         }
     }
@@ -68,7 +71,7 @@ public class ShadowDarkStarCipher extends ShadowCipher {
     byte[] encrypt(byte[] plaintext) throws Exception {
         AlgorithmParameterSpec ivSpec;
         byte[] nonce = nonce();
-        ivSpec = new GCMParameterSpec(tagSizeBits, nonce);
+        ivSpec = new AEADParameterSpec(nonce, tagSizeBits);
         cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
 
         return cipher.doFinal(plaintext);
@@ -78,7 +81,7 @@ public class ShadowDarkStarCipher extends ShadowCipher {
     public byte[] decrypt(byte[] encrypted) throws Exception {
         AlgorithmParameterSpec ivSpec;
         byte[] nonce = nonce();
-        ivSpec = new GCMParameterSpec(tagSizeBits, nonce);
+        ivSpec = new AEADParameterSpec(nonce, tagSizeBits);;
         cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
 
         return cipher.doFinal(encrypted);

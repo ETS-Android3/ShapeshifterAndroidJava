@@ -72,15 +72,22 @@ public class ExampleUnitTest {
         // generate public key on swift for SPPK
         // pass 1: recent: 03d089c225ef8cda8d477a586f062b31a756270124d94944e458edf1a9e1e41ed6
         // old pass: 3059301306072a8648ce3d020106082a8648ce3d030107034200044ed5d754928698e5f73de6ff22feb516e146b7fd1a0e6ca466ccb77e2cc324bf3deb2b4df4d7583b521ecd466f37e84b8f7930482ca2a0d18baffd353fb207fd
-        ShadowConfig config = new ShadowConfig("d089c225ef8cda8d477a586f062b31a756270124d94944e458edf1a9e1e41ed6", "DarkStar");
-        ShadowSocket shadowSocket = new ShadowSocket(config, "127.0.0.1", 1234);
+        // TODO: Make sure the password matches the servers public key.
+        ShadowConfig config = new ShadowConfig("9caa4132c724f137c67928e9338c72cfe37e0dd28b298d14d5b5981effa038c9", "DarkStar");
+        // TODO: Use an actual server IP and port here:
+        ShadowSocket shadowSocket = new ShadowSocket(config, "0.0.0.0", 1234);
         assertNotNull(shadowSocket);
+        System.out.println("Initialized a shadowsocket");
         String httpRequest = "GET / HTTP/1.0\r\n\r\n";
         byte[] textBytes = httpRequest.getBytes();
         shadowSocket.getOutputStream().write(textBytes);
+        System.out.println("Wrote some bytes.");
         shadowSocket.getOutputStream().flush();
+        System.out.println("Flushed the output stream.");
         byte[] buffer = new byte[4];
-        shadowSocket.getInputStream().read(buffer);
+        int bytesRead =  shadowSocket.getInputStream().read(buffer);
+        System.out.print("Read some bytes: ");
+        System.out.println(bytesRead);
     }
 
     @Test
