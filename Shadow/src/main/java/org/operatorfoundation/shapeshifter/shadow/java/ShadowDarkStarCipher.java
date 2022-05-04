@@ -1,6 +1,9 @@
 package org.operatorfoundation.shapeshifter.shadow.java;
 
+import android.os.Build;
 import android.util.Log;
+
+import androidx.annotation.RequiresApi;
 
 import com.google.common.primitives.UnsignedLong;
 
@@ -24,13 +27,25 @@ public class ShadowDarkStarCipher extends ShadowCipher {
 
 
     // ShadowCipher contains the encryption and decryption methods.
-    public ShadowDarkStarCipher(SecretKey key) throws NoSuchAlgorithmException {
+    public ShadowDarkStarCipher(SecretKey key) throws NoSuchAlgorithmException
+    {
         this.key = key;
 
-        try {
-            cipher = Cipher.getInstance("AES/GCM/NoPadding", "BC");
+        try
+        {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+            {
+                cipher = Cipher.getInstance("AES/GCM/NoPadding");
+            }
+            else
+            {
+                cipher = Cipher.getInstance("AES/GCM/NoPadding", "BC");
+            }
+
             saltSize = 32;
-        } catch (NoSuchPaddingException | NoSuchProviderException e) {
+        }
+        catch (NoSuchPaddingException | NoSuchProviderException e)
+        {
             e.printStackTrace();
         }
     }
@@ -71,17 +86,33 @@ public class ShadowDarkStarCipher extends ShadowCipher {
     byte[] encrypt(byte[] plaintext) throws Exception {
         AlgorithmParameterSpec ivSpec;
         byte[] nonce = nonce();
-        ivSpec = new AEADParameterSpec(nonce, tagSizeBits);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            ivSpec = new GCMParameterSpec(tagSizeBits, nonce);
+        } else {
+            ivSpec = new AEADParameterSpec(nonce, tagSizeBits);
+        }
+
         cipher.init(Cipher.ENCRYPT_MODE, key, ivSpec);
 
         return cipher.doFinal(plaintext);
     }
 
     // Decrypts data and increments the nonce counter.
-    public byte[] decrypt(byte[] encrypted) throws Exception {
+    public byte[] decrypt(byte[] encrypted) throws Exception
+    {
         AlgorithmParameterSpec ivSpec;
         byte[] nonce = nonce();
-        ivSpec = new AEADParameterSpec(nonce, tagSizeBits);;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+        {
+            ivSpec = new GCMParameterSpec(tagSizeBits, nonce);
+        }
+        else
+        {
+            ivSpec = new AEADParameterSpec(nonce, tagSizeBits);
+        }
+
         cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
 
         return cipher.doFinal(encrypted);
