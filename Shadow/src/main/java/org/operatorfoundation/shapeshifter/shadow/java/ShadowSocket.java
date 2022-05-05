@@ -44,18 +44,20 @@ public class ShadowSocket extends Socket {
         this.port = port;
 
         // Create salt for encryptionCipher
-        darkStar = new DarkStar(config, host, port);
-        this.clientSalt = darkStar.createSalt();
+        this.darkStar = new DarkStar(config, host, port);
+        this.clientSalt = darkStar.createHandshake();
+        this.socket = new Socket(host, port);
+        this.connectionStatus = true;
 
-        // Create an encryptionCipher
-        socket = new Socket(host, port);
-        connectionStatus = true;
-         try {
+         try
+         {
              handshake();
-         } catch(IOException error) {
+             Log.i("ShadowSocket.init", "Encryption cipher created.");
+         }
+         catch(IOException error)
+         {
              hole.startHole(holeTimeout, socket);
-        }
-        Log.i("init", "Encryption cipher created.");
+         }
     }
 
     // Creates a socket and connects it to the specified remote host on the specified remote port.
@@ -313,37 +315,49 @@ public class ShadowSocket extends Socket {
     }
 
     // Private functions:
-    // Exchanges the salt.
-    private void handshake() throws IOException {
-        sendSalt();
-        try {
-            receiveSalt();
+    // Exchanges the handshakes.
+    private void handshake() throws IOException
+    {
+        sendHandshake();
+
+        try
+        {
+            receiveHandshake();
             Log.i("handshake", "handshake completed");
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
+        }
+        catch (NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e)
+        {
+            Log.e("ShadowSocket", "receiveHandshake error: ");
             e.printStackTrace();
         }
     }
 
     // Sends the salt through the output stream.
-    private void sendSalt() throws IOException {
+    private void sendHandshake() throws IOException {
         socket.getOutputStream().write(this.clientSalt);
-        Log.i("sendSalt", "Salt sent.");
+        Log.i("ShadowSocket", "Handshake sent.");
     }
 
     // Receives the salt through the input stream.
-    private void receiveSalt() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException, InvalidKeyException {
+    private void receiveHandshake() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException, InvalidKeyException {
         int saltSize = ShadowCipher.determineSaltSize();
         byte[] result = Utility.readNBytes(socket.getInputStream(), saltSize);
-        if (result != null && result.length == this.clientSalt.length) {
-            if (bloom.checkBloom(result)) {
-                Log.e("receiveSalt", "duplicate salt found");
+
+        if (result != null && result.length == this.clientSalt.length)
+        {
+            if (bloom.checkBloom(result))
+            {
+                Log.e("ShadowSocket", "duplicate handshake found");
                 throw new IOException();
             }
-            decryptionCipher = darkStar.makeCipher(true, result);
-            encryptionCipher = darkStar.makeCipher(false, result);
-            Log.i("receiveSalt", "Salt received.");
-        } else {
-            Log.e("receiveSalt", "Salt was not received.");
+
+            this.decryptionCipher = darkStar.makeCipher(true, result);
+            this.encryptionCipher = darkStar.makeCipher(false, result);
+            Log.i("ShadowSocket", "Handshake received.");
+        }
+        else
+        {
+            Log.e("ShadowSocket", "Handshake was not received or was incorrect.");
             throw new IOException();
         }
     }

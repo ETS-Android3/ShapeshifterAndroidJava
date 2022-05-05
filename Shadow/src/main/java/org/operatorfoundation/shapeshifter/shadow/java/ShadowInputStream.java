@@ -30,25 +30,31 @@ public class ShadowInputStream extends InputStream {
 
     // Reads some number of bytes from the input stream and stores them into the buffer array b.
     @Override
-    public int read(byte[] b) throws IOException {
-        if (decryptionFailed) {
+    public int read(byte[] outputBuffer) throws IOException
+    {
+        if (decryptionFailed)
+        {
             Log.e("read", "Decryption failed on read.");
             return -1;
         }
-        if (b == null || b.length == 0) {
+
+        if (outputBuffer == null || outputBuffer.length == 0)
+        {
             Log.e("read", "read was given an empty byte array.");
             return 0;
         }
 
-        // puts the bytes in a buffer
-        if (buffer.length > 0) {
-            int resultSize = b.length;
-            System.arraycopy(buffer, 0, b, 0, resultSize);
+        // if the buffer already has data, put it in b
+        int resultSize = outputBuffer.length;
+        int bufferSize = buffer.length;
+
+        if (resultSize <= bufferSize)
+        {
+            System.arraycopy(buffer, 0, outputBuffer, 0, resultSize);
             buffer = Arrays.copyOfRange(buffer, resultSize, buffer.length);
 
             return resultSize;
         }
-
 
         //get encrypted length
         int lengthDataSize = ShadowCipher.lengthWithTagSize;
@@ -56,7 +62,9 @@ public class ShadowInputStream extends InputStream {
 
         // read bytes up to the size of encrypted lengthSize into a byte buffer
         byte[] encryptedLengthData = Utility.readNBytes(networkInputStream, lengthDataSize);
-        if (encryptedLengthData == null) {
+
+        if (encryptedLengthData == null)
+        {
             Log.e("read", "Could not read encrypted length bytes.");
             return -1;
         }
@@ -69,7 +77,9 @@ public class ShadowInputStream extends InputStream {
             Log.d("ShadowInputStream.read", "attempting to decrypt length data.");
             lengthData = decryptionCipher.decrypt(encryptedLengthData);
             Log.i("read", "Length bytes decrypted.");
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             e.printStackTrace();
             decryptionFailed = true;
             Log.e("read", "Decryption failed on read.");
@@ -83,7 +93,8 @@ public class ShadowInputStream extends InputStream {
         byte rightByte = lengthData[1];
         int leftInt = (int) leftByte * 256;
         int rightInt = (int) rightByte;
-        if (rightInt < 0) {
+        if (rightInt < 0)
+        {
             rightInt += 256;
         }
 
@@ -91,15 +102,19 @@ public class ShadowInputStream extends InputStream {
 
         //read and decrypt payload with the resulting length
         byte[] encryptedPayload = Utility.readNBytes(networkInputStream, payloadLength + ShadowCipher.tagSize);
-        if (encryptedPayload == null) {
+        if (encryptedPayload == null)
+        {
             Log.e("read", "Could not read encrypted length data.");
             return -1;
         }
         byte[] payload = new byte[0];
-        try {
+        try
+        {
             payload = decryptionCipher.decrypt(encryptedPayload);
             Log.i("read", "Payload decrypted.");
-        } catch (Exception e) {
+        }
+        catch (Exception e)
+        {
             e.printStackTrace();
             decryptionFailed = true;
             Log.e("read", "Decryption failed on read.");
@@ -108,11 +123,14 @@ public class ShadowInputStream extends InputStream {
         }
         // put payload into buffer
         buffer = Utility.plusEqualsByteArray(buffer, payload);
-        assert b != null;
-        int resultSize = Math.min(b.length, buffer.length);
+        assert outputBuffer != null;
+        resultSize = Math.min(outputBuffer.length, buffer.length);
+        //FIXME:
+        //int resultSize = Math.min(outputBuffer.length, buffer.length);
+
 
         // take bytes out of buffer.
-        System.arraycopy(buffer, 0, b, 0, resultSize);
+        System.arraycopy(buffer, 0, outputBuffer, 0, resultSize);
         buffer = Arrays.copyOfRange(buffer, resultSize, buffer.length);
 
         return resultSize;
