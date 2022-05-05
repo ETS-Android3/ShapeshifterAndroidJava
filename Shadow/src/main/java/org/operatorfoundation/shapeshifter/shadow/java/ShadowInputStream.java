@@ -52,6 +52,7 @@ public class ShadowInputStream extends InputStream {
 
         //get encrypted length
         int lengthDataSize = ShadowCipher.lengthWithTagSize;
+        Log.d("ShadowInputStream.read", "attempting to read length data.");
 
         // read bytes up to the size of encrypted lengthSize into a byte buffer
         byte[] encryptedLengthData = Utility.readNBytes(networkInputStream, lengthDataSize);
@@ -59,10 +60,13 @@ public class ShadowInputStream extends InputStream {
             Log.e("read", "Could not read encrypted length bytes.");
             return -1;
         }
+        Log.d("ShadowInputStream.read", "read length data.");
 
         //decrypt encrypted length to find out payload length
         byte[] lengthData = new byte[0];
-        try {
+        try
+        {
+            Log.d("ShadowInputStream.read", "attempting to decrypt length data.");
             lengthData = decryptionCipher.decrypt(encryptedLengthData);
             Log.i("read", "Length bytes decrypted.");
         } catch (Exception e) {

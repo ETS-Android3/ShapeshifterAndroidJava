@@ -2,6 +2,8 @@ package org.operatorfoundation.shadow;
 
 import static org.junit.Assert.assertNotNull;
 
+import android.util.Log;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
@@ -30,28 +32,48 @@ public class ExampleInstrumentedTest {
     @Test
     public void shadowTestMatrixTest() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
         // TODO: Make sure the password matches the servers public key.
-        ShadowConfig config = new ShadowConfig("d089c225ef8cda8d477a586f062b31a756270124d94944e458edf1a9e1e41ed6", "DarkStar");
+        ShadowConfig config = new ShadowConfig("9caa4132c724f137c67928e9338c72cfe37e0dd28b298d14d5b5981effa038c9", "DarkStar");
 
         // TODO: Use an actual server IP and port here:
-        ShadowSocket shadowSocket = new ShadowSocket(config, "164.92.71.230", 2222);
+        ShadowSocket shadowSocket = new ShadowSocket(config, "", 1234);
 
         assertNotNull(shadowSocket);
-        System.out.println("Initialized a shadowsocket");
+        Log.d("ShadowTest", "Initialized a shadowsocket");
 
         // Write some data.
-        String httpRequest = "GET / HTTP/1.0\r\n\r\n";
+        String httpRequest = "GET / HTTP/1.0\r\nConnection: close\r\n\r\n";
         byte[] textBytes = httpRequest.getBytes();
+
         shadowSocket.getOutputStream().write(textBytes);
-        System.out.println("Wrote some bytes.");
+        Log.d("ShadowTest", "Wrote some bytes.");
+
         shadowSocket.getOutputStream().flush();
-        System.out.println("Flushed the output stream.");
+        Log.d("ShadowTest", "Flushed the output stream.");
 
         // Read some data.
-        byte[] buffer = new byte[4];
+        byte[] buffer = new byte[235];
         int bytesRead =  shadowSocket.getInputStream().read(buffer);
-        System.out.print("Read some bytes: ");
-        System.out.println(bytesRead);
-        System.out.println("Test Complete!");
+
+        if (bytesRead > 0)
+        {
+            Log.d("ShadowTest", "Read some bytes: " + bytesRead);
+
+            String responseString = new String(buffer, StandardCharsets.UTF_8);
+            Log.d("ShadowTest", responseString);
+
+            if (responseString.contains("Yeah!"))
+            {
+                Log.d("ShadowTest", "The test succeeded!");
+            }
+            else
+            {
+                Log.e("ShadowTest", "The test failed, we did not find the response we expected.");
+            }
+        }
+        else
+        {
+            Log.e("ShadowTest", "Read 0 bytes");
+        }
     }
 
     @Test

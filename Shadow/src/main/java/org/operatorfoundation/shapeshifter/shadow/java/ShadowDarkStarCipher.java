@@ -35,7 +35,7 @@ public class ShadowDarkStarCipher extends ShadowCipher {
         {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
             {
-                cipher = Cipher.getInstance("AES/GCM/NoPadding");
+                cipher = Cipher.getInstance("AES_256/GCM/NoPadding");
             }
             else
             {
