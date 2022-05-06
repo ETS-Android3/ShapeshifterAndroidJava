@@ -20,6 +20,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.spec.InvalidKeySpecException;
@@ -31,20 +32,23 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 
-public class DarkStar {
-    public SecretKey sharedKeyClient;
-    public SecretKey sharedKeyServer;
+public class DarkStar
+{
+    public SecretKey sharedKeyClientToServer;
+    public SecretKey sharedKeyServerToClient;
+    KeyPair clientEphemeralKeyPair;
+    PublicKey serverPersistentPublicKey;
+
     static byte[] darkStarBytes = "DarkStar".getBytes();
     static byte[] clientStringBytes = "client".getBytes();
     static byte[] serverStringBytes = "server".getBytes();
-    KeyPair clientEphemeralKeyPair;
-    PublicKey serverPersistentPublicKey;
-    ShadowConfig config;
+
+    ShadowConfig shadowConfig;
     String host;
     int port;
 
     public DarkStar(ShadowConfig config, String host, int port) {
-        this.config = config;
+        this.shadowConfig = config;
         this.host = host;
         this.port = port;
     }
@@ -52,20 +56,20 @@ public class DarkStar {
     public byte[] createHandshake() throws NoSuchAlgorithmException, InvalidKeySpecException, UnknownHostException
     {
         // take ServerPersistentPublicKey out of password string
-        byte[] serverPersistentPublicKeyData = hexToBytes(config.password);
+        byte[] serverPersistentPublicKeyData = hexToBytes(shadowConfig.password);
         this.serverPersistentPublicKey = bytesToPublicKey(serverPersistentPublicKeyData);
 
         // generate an ephemeral keypair
         this.clientEphemeralKeyPair = generateECKeys();
 
-        // get the client private and public key
+        // get the client ephemeral private and public keys from the key pair
         PrivateKey clientEphemeralPrivateKey = null;
         PublicKey clientEphemeralPublicKey = null;
 
-        if (clientEphemeralKeyPair != null)
+        if (this.clientEphemeralKeyPair != null)
         {
-            clientEphemeralPrivateKey = clientEphemeralKeyPair.getPrivate();
-            clientEphemeralPublicKey = clientEphemeralKeyPair.getPublic();
+            clientEphemeralPrivateKey = this.clientEphemeralKeyPair.getPrivate();
+            clientEphemeralPublicKey = this.clientEphemeralKeyPair.getPublic();
         }
 
         // convert the ephemeral public key into data and save it to the handshakeData array.
@@ -81,53 +85,77 @@ public class DarkStar {
         return handshakeData;
     }
 
-    public void splitHandshake(byte[] handshakeData, byte[] ephemeralPublicKeyBuf, byte[] confirmationCodeBuf)  {
-        if (handshakeData.length != 64) {
-            Log.e("DarkStar", "incorrect salt size")            ;
+    public void splitHandshake(byte[] handshakeData, byte[] ephemeralPublicKeyBuf, byte[] confirmationCodeBuf)
+    {
+        if (handshakeData.length != 64)
+        {
+            Log.e("DarkStar", "incorrect handshake size")            ;
         }
 
         System.arraycopy(handshakeData, 0, ephemeralPublicKeyBuf, 0, 32);
         System.arraycopy(handshakeData, 32, confirmationCodeBuf, 0, 32);
     }
 
-    public ShadowCipher makeCipher(boolean isClient, byte[] salt) throws InvalidKeySpecException, NoSuchAlgorithmException, UnknownHostException, InvalidKeyException {
-
+    public ShadowCipher makeCipher(boolean isClientToServer, byte[] handshakeBytes) throws InvalidKeySpecException, NoSuchAlgorithmException, UnknownHostException, InvalidKeyException
+    {
         byte[] serverEphemeralPublicKeyData = new byte[32];
         byte[] serverConfirmationCode = new byte[32];
-
-        splitHandshake(salt, serverEphemeralPublicKeyData, serverConfirmationCode);
+        splitHandshake(handshakeBytes, serverEphemeralPublicKeyData, serverConfirmationCode);
 
         // turn the server's public key data back to a public key type
         PublicKey serverEphemeralPublicKey = bytesToPublicKey(serverEphemeralPublicKeyData);
 
         // derive shared keys
-        SecretKey sharedKey = generateSharedKey(isClient, host, port, clientEphemeralKeyPair, serverEphemeralPublicKey, serverPersistentPublicKey);
+        SecretKey sharedKey = generateSharedKey(
+                isClientToServer,
+                host,
+                port,
+                clientEphemeralKeyPair,
+                serverEphemeralPublicKey,
+                serverPersistentPublicKey);
 
-        if (isClient) {
-            sharedKeyClient = sharedKey;
-        } else {
-            sharedKeyServer = sharedKey;
+        if (isClientToServer)
+        {
+            sharedKeyClientToServer = sharedKey;
+        }
+        else
+        {
+            sharedKeyServerToClient = sharedKey;
         }
 
         // check confirmationCode
-        byte[] clientCopyServerConfirmationCode = generateServerConfirmationCode(host, port, clientEphemeralKeyPair.getPublic(), clientEphemeralKeyPair.getPrivate(), serverPersistentPublicKey);
-        if (!Arrays.equals(clientCopyServerConfirmationCode, serverConfirmationCode)) {
+        byte[] clientCopyServerConfirmationCode = generateServerConfirmationCode(
+                host,
+                port,
+                clientEphemeralKeyPair.getPublic(),
+                clientEphemeralKeyPair.getPrivate(),
+                serverPersistentPublicKey);
+        if (!Arrays.equals(clientCopyServerConfirmationCode, serverConfirmationCode))
+        {
             throw new InvalidKeyException();
         }
 
-        return new ShadowDarkStarCipher(sharedKeyClient);
+        if (isClientToServer)
+        {
+            return new ShadowDarkStarCipher(sharedKeyClientToServer);
+        }
+        else
+        {
+            return new ShadowDarkStarCipher(sharedKeyServerToClient);
+        }
     }
 
-    public static KeyPair generateECKeys() {
-        try {
+    public static KeyPair generateECKeys()
+    {
+        try
+        {
             ECNamedCurveParameterSpec parameterSpec = ECNamedCurveTable.getParameterSpec("secp256r1");
-            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(
-                    "EC", new BouncyCastleProvider());
-
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("EC", new BouncyCastleProvider());
             keyPairGenerator.initialize(parameterSpec);
-
             return keyPairGenerator.generateKeyPair();
-        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e) {
+        }
+        catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException e)
+        {
             e.printStackTrace();
             return null;
         }
@@ -151,14 +179,17 @@ public class DarkStar {
         }
     }
 
-    public static SecretKey generateSharedSecret(PrivateKey privateKey, PublicKey publicKey) {
-        try {
+    public static SecretKey generateSharedSecret(PrivateKey privateKey, PublicKey publicKey)
+    {
+        try
+        {
             KeyAgreement keyAgreement = KeyAgreement.getInstance("ECDH", new BouncyCastleProvider());
             keyAgreement.init(privateKey);
             keyAgreement.doPhase(publicKey, true);
-
             return keyAgreement.generateSecret("secp256r1");
-        } catch (InvalidKeyException | NoSuchAlgorithmException e) {
+        }
+        catch (InvalidKeyException | NoSuchAlgorithmException e)
+        {
             e.printStackTrace();
             return null;
         }

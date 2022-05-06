@@ -48,4 +48,20 @@ public class Utility {
         System.arraycopy(two, 0, combined, one.length, two.length);
         return combined;
     }
+
+    /// changes data (bigEData) from BigEndian representation to an int
+    static int getIntFromBigEndian(byte[] bigEData)
+    {
+        byte leftByte = bigEData[0];
+        byte rightByte = bigEData[1];
+        int leftInt = (int) leftByte * 256;
+        int rightInt = rightByte;
+
+        if (rightInt < 0)
+        {
+            rightInt += 256;
+        }
+
+        return (leftInt + rightInt);
+    }
 }
