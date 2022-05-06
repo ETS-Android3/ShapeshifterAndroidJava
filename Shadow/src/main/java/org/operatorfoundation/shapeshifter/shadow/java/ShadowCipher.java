@@ -14,10 +14,11 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.SecretKey;
 
-public abstract class ShadowCipher {
-    static int lengthWithTagSize = 2 + 16;
-    static int tagSizeBits = 16 * 8;
+public abstract class ShadowCipher
+{
     static int tagSize = 16;
+    static int lengthWithTagSize = 2 + tagSize;
+    static int tagSizeBits = tagSize * 8;
     static int maxPayloadSize = 16417;
     private static int finalSaltSize;
 
@@ -28,7 +29,7 @@ public abstract class ShadowCipher {
     SecretKey key;
     int counter = 0;
 
-    static int determineSaltSize() {
+    static int determineHandshakeSize() {
         return 32 + 32;
     }
 

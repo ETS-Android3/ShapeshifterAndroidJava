@@ -24,13 +24,14 @@ import java.security.spec.InvalidKeySpecException;
  *
  * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
  */
-public class ExampleInstrumentedTest {
-
+public class ExampleInstrumentedTest
+{
     @Rule
     public Timeout globalTimeout = new Timeout(20 * 1000); // 20 seconds
 
     @Test
-    public void shadowTestMatrixTest() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
+    public void shadowTestMatrixTest() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException
+    {
         // TODO: Make sure the password matches the servers public key.
         ShadowConfig config = new ShadowConfig("9caa4132c724f137c67928e9338c72cfe37e0dd28b298d14d5b5981effa038c9", "DarkStar");
 
