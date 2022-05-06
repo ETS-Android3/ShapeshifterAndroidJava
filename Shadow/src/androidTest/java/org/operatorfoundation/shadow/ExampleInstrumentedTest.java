@@ -59,7 +59,7 @@ public class ExampleInstrumentedTest
         {
             Log.d("ShadowTest", "Read some bytes: " + bytesRead);
 
-            String responseString = new String(buffer, StandardCharsets.UTF_8);
+            String responseString = new String(buffer, "UTF-8");
             Log.d("ShadowTest", responseString);
 
             if (responseString.contains("Yeah!"))
