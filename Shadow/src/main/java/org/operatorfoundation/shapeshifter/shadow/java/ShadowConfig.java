@@ -8,17 +8,19 @@ public class ShadowConfig {
     public CipherMode cipherMode;
 
     // ShadowConfig is a class that implements the arguments necessary for a Shadowsocks connection.
-    public ShadowConfig(String password, String cipherName) throws IllegalArgumentException {
+    public ShadowConfig(String password, String cipherName) throws IllegalArgumentException
+    {
         this.password = password;
         this.cipherName = cipherName;
 
-        CipherMode maybeMode = CipherMode.DarkStar;
-        if (maybeMode == null) {
-            Log.e("ShadowConfig", "Invalid cipherMode in the config: $cipherName");
-            throw new IllegalArgumentException();
+        try
+        {
+            cipherMode = CipherMode.valueOf(cipherName.toLowerCase());
         }
-
-        cipherMode = maybeMode;
-
+        catch (IllegalArgumentException error)
+        {
+            Log.e("ShadowConfig", "Invalid cipherMode in the config: $cipherName");
+            throw error;
+        }
     }
 }
