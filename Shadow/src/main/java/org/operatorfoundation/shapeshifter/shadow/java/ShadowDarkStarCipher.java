@@ -42,7 +42,7 @@ public class ShadowDarkStarCipher extends ShadowCipher
             }
             else
             {
-                cipher = Cipher.getInstance(cipherType, cipherProvider);
+                cipher = Cipher.getInstance("AES/GCM/NoPadding", cipherProvider);
             }
         }
         catch (NoSuchPaddingException | NoSuchProviderException e)
