@@ -5,12 +5,7 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
-
-import javax.crypto.AEADBadTagException;
 
 // This abstract class is the superclass of all classes representing an input stream of bytes.
 public class ShadowInputStream extends InputStream {

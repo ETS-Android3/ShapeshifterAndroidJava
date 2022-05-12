@@ -1,13 +1,7 @@
 package org.operatorfoundation.shapeshifter.shadow.java;
 
 import android.os.Build;
-import android.security.identity.MessageDecryptionException;
-import android.util.Log;
-
-import androidx.annotation.RequiresApi;
-
 import com.google.common.primitives.UnsignedLong;
-
 import org.bouncycastle.jcajce.spec.AEADParameterSpec;
 
 import java.nio.ByteBuffer;

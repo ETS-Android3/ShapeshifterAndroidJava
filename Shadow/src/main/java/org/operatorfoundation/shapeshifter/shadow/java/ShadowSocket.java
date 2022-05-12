@@ -114,7 +114,7 @@ public class ShadowSocket extends Socket
         this.socket = new Socket(proxy);
     }
 
-    public void dial(ShadowConfig config, String host, int port) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException
+    public void dial(ShadowConfig config, String host, int port) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException
     {
         this.shadowConfig = config;
         this.host = host;
@@ -250,7 +250,7 @@ public class ShadowSocket extends Socket
 
     // Returns an input stream for this socket if a decryption cipher was created.
     @Override
-    public InputStream getInputStream() throws IOException
+    public InputStream getInputStream()
     {
         return inputStream;
     }
