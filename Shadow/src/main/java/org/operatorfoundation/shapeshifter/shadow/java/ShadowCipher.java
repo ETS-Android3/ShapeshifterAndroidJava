@@ -20,18 +20,9 @@ public abstract class ShadowCipher
     static int lengthWithTagSize = 2 + tagSize;
     static int tagSizeBits = tagSize * 8;
     static int maxPayloadSize = 16417;
-    private static int finalSaltSize;
+    static int handshakeSize = 64;
 
-    byte[] salt;
-    int saltSize;
     Cipher cipher;
-    ShadowConfig config;
-    SecretKey key;
-    int counter = 0;
-
-    static int determineHandshakeSize() {
-        return 32 + 32;
-    }
 
     // [encrypted payload length][length tag] + [encrypted payload][payload tag]
     // Pack takes the data above and packs them into a singular byte array.

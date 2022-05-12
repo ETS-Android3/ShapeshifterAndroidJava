@@ -415,7 +415,7 @@ public class ShadowSocket extends Socket
     // Receives the salt through the input stream.
     private void receiveHandshake() throws NoSuchAlgorithmException, IOException, InvalidKeySpecException, InvalidKeyException
     {
-        int handshakeSize = ShadowCipher.determineHandshakeSize();
+        int handshakeSize = ShadowCipher.handshakeSize;
         byte[] result = Utility.readNBytes(socket.getInputStream(), handshakeSize);
 
         if (result != null && result.length == this.handshakeBytes.length)

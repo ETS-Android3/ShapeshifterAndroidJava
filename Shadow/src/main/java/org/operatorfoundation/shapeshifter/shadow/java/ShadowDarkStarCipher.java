@@ -21,10 +21,12 @@ import javax.crypto.NoSuchPaddingException;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
-public class ShadowDarkStarCipher extends ShadowCipher {
+public class ShadowDarkStarCipher extends ShadowCipher
+{
     SecretKey key;
     UnsignedLong longCounter = UnsignedLong.ZERO;
-
+    String cipherType = "AES_256/GCM/NoPadding";
+    String cipherProvider = "BC";
 
     // ShadowCipher contains the encryption and decryption methods.
     public ShadowDarkStarCipher(SecretKey key) throws NoSuchAlgorithmException
@@ -35,14 +37,12 @@ public class ShadowDarkStarCipher extends ShadowCipher {
         {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
             {
-                cipher = Cipher.getInstance("AES_256/GCM/NoPadding");
+                cipher = Cipher.getInstance(cipherType);
             }
             else
             {
-                cipher = Cipher.getInstance("AES/GCM/NoPadding", "BC");
+                cipher = Cipher.getInstance(cipherType, cipherProvider);
             }
-
-            saltSize = 32;
         }
         catch (NoSuchPaddingException | NoSuchProviderException e)
         {
@@ -50,16 +50,10 @@ public class ShadowDarkStarCipher extends ShadowCipher {
         }
     }
 
-    // Create a secret key using the two key derivation functions.
-    public SecretKey createSecretKey(ShadowConfig config, byte[] salt) throws NoSuchAlgorithmException {
-        // FIXME: Actually refactor this function
-        //DarkStar.generateSharedKeyClient(config.cipherName, config.password, salt);
-        return null;
-    }
-
     // [encrypted payload length][length tag] + [encrypted payload][payload tag]
     // Pack takes the data above and packs them into a singular byte array.
-    public byte[] pack(byte[] plaintext) throws Exception {
+    public byte[] pack(byte[] plaintext) throws Exception
+    {
         // find the length of plaintext
         int plaintextLength = plaintext.length;
         if (plaintextLength > Short.MAX_VALUE) {
@@ -83,7 +77,8 @@ public class ShadowDarkStarCipher extends ShadowCipher {
     }
 
     // Encrypts the data and increments the nonce counter.
-    byte[] encrypt(byte[] plaintext) throws Exception {
+    byte[] encrypt(byte[] plaintext) throws Exception
+    {
         AlgorithmParameterSpec ivSpec;
         byte[] nonce = nonce();
 
@@ -119,7 +114,8 @@ public class ShadowDarkStarCipher extends ShadowCipher {
     }
 
     @Override
-    public byte[] nonce() throws Exception {
+    public byte[] nonce() throws Exception
+    {
         // NIST Special Publication 800-38D - Recommendation for Block Cipher Modes of Operation: Galois/Counter Mode (GCM) and GMAC
         // https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf
         // Section 8.2.1 - Deterministic Construction
@@ -175,12 +171,14 @@ public class ShadowDarkStarCipher extends ShadowCipher {
         */
 
         buffer.putLong(longCounter.longValue());
-        Log.i("nonce", "Nonce created. Counter is " + longCounter);
-        System.out.println("key: " + key.getEncoded() + "counter: " + longCounter);
-        if (longCounter.compareTo(UnsignedLong.MAX_VALUE) == -1) {  // a < b = -1   a > b = 0
+
+        if (longCounter.compareTo(UnsignedLong.MAX_VALUE) == -1)
+        {
+            // a < b = -1   a > b = 0
             longCounter = longCounter.plus(UnsignedLong.ONE);
-            System.out.println("key: " + key.getEncoded() + "counter: " + longCounter);
-        } else {
+        }
+        else
+        {
             throw new Exception("64 bit nonce counter overflow");
         }
 
