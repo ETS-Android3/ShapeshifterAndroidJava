@@ -5,15 +5,21 @@ import android.util.Log;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Arrays;
+
+import javax.crypto.AEADBadTagException;
 
 // This abstract class is the superclass of all classes representing an input stream of bytes.
 public class ShadowInputStream extends InputStream {
-    final InputStream networkInputStream;
-    final ShadowCipher decryptionCipher;
-    final ShadowSocket shadowSocket;
+    InputStream networkInputStream;
+    ShadowCipher decryptionCipher;
+    ShadowSocket shadowSocket;
     byte[] buffer = new byte[0];
     boolean decryptionFailed = false;
+    boolean firstRead = true;
 
 
     // Applications that need to define a subclass of InputStream must always provide a method that returns the next byte of input.
@@ -85,6 +91,7 @@ public class ShadowInputStream extends InputStream {
 
             //decrypt encrypted length to find out payload length
             byte[] lengthData = decryptionCipher.decrypt(encryptedLengthData);
+            firstRead = false;
             Log.d("ShadowInputStream.read", "Length bytes decrypted.");
 
             // change lengthData from BigEndian representation to int length
@@ -113,6 +120,36 @@ public class ShadowInputStream extends InputStream {
 
             return resultSize;
         }
+        catch (DarkStarDecryptionException decryptError)
+        {
+            Log.e("ShadowInputStream.read", "Decryption failed.");
+
+            try
+            {
+                if (firstRead)
+                {
+                    // Try to redial
+                    shadowSocket.dial(shadowSocket.shadowConfig, shadowSocket.host, shadowSocket.port);
+                }
+                else
+                {
+                    // Give up
+                    decryptionFailed = true;
+                    shadowSocket.close();
+                    Log.e("ShadowInputStream.read", "Decryption Error, closing the connection.");
+                    throw new IOException();
+                }
+            }
+            catch (Exception dialError)
+            {
+                // If the redial fails, give up
+                Log.e("ShadowInputStream.read", "Received an Exception.");
+                dialError.printStackTrace();
+                throw new IOException();
+            }
+
+            throw new IOException();
+        }
         catch (Exception readError)
         {
             if (readError instanceof IOException) // readNBytes failed
@@ -120,16 +157,11 @@ public class ShadowInputStream extends InputStream {
                 Log.e("ShadowInputStream.read", "Received an IOException.");
                 shadowSocket.close();
             }
-            else // Decrypt Failed
-            {
-                Log.e("ShadowInputStream.read", "Decryption failed.");
-                // TODO: Client should redial (see kotlin code)
-                decryptionFailed = true;
-            }
 
             readError.printStackTrace();
             throw new IOException();
         }
+
     }
 
     @Override

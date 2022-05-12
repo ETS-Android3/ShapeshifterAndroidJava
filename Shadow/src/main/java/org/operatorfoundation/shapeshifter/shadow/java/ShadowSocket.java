@@ -15,21 +15,23 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Objects;
 
 // This class implements client sockets (also called just "sockets").
 public class ShadowSocket extends Socket
 {
     // Fields:
+    private ShadowInputStream inputStream;
+    private ShadowOutputStream outputStream;
+
     Socket socket = new Socket();
     ShadowConfig shadowConfig;
-    byte[] handshakeBytes;
     ShadowCipher encryptionCipher;
     ShadowCipher decryptionCipher;
     Boolean connectionStatus;
     DarkStar darkStar;
     String host;
     int port;
-    Boolean decryptFailed = false;
 
     static Bloom bloom = new Bloom();
 
@@ -38,31 +40,11 @@ public class ShadowSocket extends Socket
     // Creates a stream socket and connects it to the specified port number on the named host.
     public ShadowSocket(ShadowConfig config, String host, int port) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException
     {
-        this.shadowConfig = config;
-        this.host = host;
-        this.port = port;
-        this.socket = new Socket(host, port);
-
-         try
-         {
-             this.darkStar = new DarkStar(config, host, port);
-             this.handshakeBytes = darkStar.createHandshake();
-             handshake();
-             this.connectionStatus = true;
-         }
-         catch(Exception error)
-         {
-             Log.e("ShadowSocket.init", "Handshake failed");
-             error.printStackTrace();
-             this.socket.close();
-             this.connectionStatus = false;
-
-             throw error;
-         }
+        dial(config, host, port);
     }
 
     // Creates a socket and connects it to the specified remote host on the specified remote port.
-    public ShadowSocket(ShadowConfig config, String host, int port, InetAddress localAddr, int localPort) throws IOException
+    public ShadowSocket(ShadowConfig config, String host, int port, InetAddress localAddr, int localPort) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException
     {
         this.shadowConfig = config;
         this.socket = new Socket(host, port, localAddr, localPort);
@@ -84,8 +66,7 @@ public class ShadowSocket extends Socket
     }
 
     // Creates a stream socket and connects it to the specified port number at the specified IP address.
-    public ShadowSocket(ShadowConfig config, InetAddress address, int port) throws IOException
-    {
+    public ShadowSocket(ShadowConfig config, InetAddress address, int port) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         this.shadowConfig = config;
         this.socket = new Socket(address, port);
 
@@ -106,8 +87,7 @@ public class ShadowSocket extends Socket
     }
 
     // Creates a socket and connects it to the specified remote address on the specified remote port.
-    public ShadowSocket(ShadowConfig config, InetAddress address, int port, InetAddress localAddr, int localPort) throws IOException
-    {
+    public ShadowSocket(ShadowConfig config, InetAddress address, int port, InetAddress localAddr, int localPort) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException {
         this.shadowConfig = config;
         this.socket = new Socket(address, port, localAddr, localPort);
 
@@ -116,7 +96,7 @@ public class ShadowSocket extends Socket
             handshake();
             this.connectionStatus = true;
         }
-        catch(IOException error)
+        catch(IOException | NoSuchAlgorithmException | InvalidKeySpecException error)
         {
             Log.e("ShadowSocket.init", "Handshake failed");
             error.printStackTrace();
@@ -132,6 +112,50 @@ public class ShadowSocket extends Socket
     {
         this.shadowConfig = config;
         this.socket = new Socket(proxy);
+    }
+
+    public void dial(ShadowConfig config, String host, int port) throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException
+    {
+        this.shadowConfig = config;
+        this.host = host;
+        this.port = port;
+        this.socket = new Socket(host, port);
+
+        try
+        {
+            this.darkStar = new DarkStar(config, host, port);
+            handshake();
+            this.connectionStatus = true;
+
+            if (this.outputStream == null)
+            {
+                this.outputStream = new ShadowOutputStream(socket.getOutputStream(), encryptionCipher);
+            }
+            else
+            {
+                this.outputStream.outputStream = socket.getOutputStream();
+                this.outputStream.encryptionCipher = encryptionCipher;
+            }
+
+            if (this.inputStream == null)
+            {
+                this.inputStream = new ShadowInputStream(this, socket.getInputStream(), decryptionCipher);
+            }
+            else
+            {
+                this.inputStream.networkInputStream = socket.getInputStream();
+                this.inputStream.decryptionCipher = decryptionCipher;
+                this.inputStream.shadowSocket = this;
+            }
+        }
+        catch(Exception error)
+        {
+            Log.e("ShadowSocket.dial", "Handshake failed");
+            error.printStackTrace();
+            this.socket.close();
+            this.connectionStatus = false;
+            throw error;
+        }
     }
 
     // Public functions:
@@ -173,9 +197,10 @@ public class ShadowSocket extends Socket
             {
                 socket.close();
                 connectionStatus = false;
-                Log.e("ShadowSocket.init", "Handshake failed");
+                Log.e("ShadowSocket.connect", "Handshake failed");
+                Log.e("ShadowSocket.connect", Objects.requireNonNull(handshakeError.getMessage()));
 
-                throw handshakeError;
+                throw new IOException();
             }
         }
     }
@@ -204,8 +229,9 @@ public class ShadowSocket extends Socket
                 socket.close();
                 connectionStatus = false;
                 Log.e("ShadowSocket.init", "Handshake failed");
+                Log.e("ShadowSocket.connect", Objects.requireNonNull(handshakeError.getMessage()));
 
-                throw handshakeError;
+                throw new IOException();
             }
         }
     }
@@ -226,17 +252,7 @@ public class ShadowSocket extends Socket
     @Override
     public InputStream getInputStream() throws IOException
     {
-        ShadowCipher cipher = decryptionCipher;
-
-        if (cipher != null)
-        {
-            return new ShadowInputStream(this, socket.getInputStream(), cipher);
-        }
-        else
-        {
-            Log.e("ShadowSocket", "Unable to provide an InputStream - the decryption cipher was not created.");
-            throw new IOException();
-        }
+        return inputStream;
     }
 
     // Tests if SO_KEEPALIVE is enabled.
@@ -271,8 +287,8 @@ public class ShadowSocket extends Socket
 
     // Returns an output stream and the encryption cipher for this socket.
     @Override
-    public OutputStream getOutputStream() throws IOException {
-        return new ShadowOutputStream(socket.getOutputStream(), encryptionCipher);
+    public OutputStream getOutputStream() {
+        return outputStream;
     }
 
     // Returns the remote port number to which this socket is connected.
@@ -389,9 +405,10 @@ public class ShadowSocket extends Socket
 
     // Private functions:
     // Exchanges the handshakes.
-    private void handshake() throws IOException
+    private void handshake() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException
     {
-        sendHandshake();
+        byte[] handshakeBytes = darkStar.createHandshake();
+        sendHandshake(handshakeBytes);
 
         try
         {
@@ -406,9 +423,9 @@ public class ShadowSocket extends Socket
     }
 
     // Sends the salt through the output stream.
-    private void sendHandshake() throws IOException
+    private void sendHandshake(byte[] handshakeBytes) throws IOException
     {
-        socket.getOutputStream().write(this.handshakeBytes);
+        socket.getOutputStream().write(handshakeBytes);
         Log.i("ShadowSocket", "Handshake sent.");
     }
 
@@ -418,7 +435,7 @@ public class ShadowSocket extends Socket
         int handshakeSize = ShadowCipher.handshakeSize;
         byte[] result = Utility.readNBytes(socket.getInputStream(), handshakeSize);
 
-        if (result != null && result.length == this.handshakeBytes.length)
+        if (result != null && result.length == handshakeSize)
         {
             if (bloom.checkBloom(result))
             {

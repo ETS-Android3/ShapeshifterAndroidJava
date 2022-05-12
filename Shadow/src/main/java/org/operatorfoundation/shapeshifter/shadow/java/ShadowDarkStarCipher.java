@@ -1,6 +1,7 @@
 package org.operatorfoundation.shapeshifter.shadow.java;
 
 import android.os.Build;
+import android.security.identity.MessageDecryptionException;
 import android.util.Log;
 
 import androidx.annotation.RequiresApi;
@@ -110,7 +111,13 @@ public class ShadowDarkStarCipher extends ShadowCipher
 
         cipher.init(Cipher.DECRYPT_MODE, key, ivSpec);
 
-        return cipher.doFinal(encrypted);
+        try {
+            return cipher.doFinal(encrypted);
+        }
+        catch (Exception decryptError)
+        {
+            throw new DarkStarDecryptionException();
+        }
     }
 
     @Override
@@ -185,3 +192,4 @@ public class ShadowDarkStarCipher extends ShadowCipher
         return buffer.array();
     }
 }
+

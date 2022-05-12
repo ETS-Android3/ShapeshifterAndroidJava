@@ -160,7 +160,8 @@ public class DarkStar
         }
     }
 
-    public static KeyPair loadECKeys(String privateKeyString, String publicKeyString) {
+    public static KeyPair loadECKeys(String privateKeyString, String publicKeyString)
+    {
         try {
             KeyFactory keyFactory = KeyFactory.getInstance("EC", new BouncyCastleProvider());
 
