@@ -8,7 +8,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Array;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.URL;
@@ -24,8 +23,10 @@ import com.google.gson.Gson;
 
 import javax.net.SocketFactory;
 
-class JsonConfig {
-    static class ServerConfig {
+class JsonConfig
+{
+    static class ServerConfig
+    {
         String id;
         String server;
         int server_port;
@@ -33,26 +34,29 @@ class JsonConfig {
         String method;
     }
 
-    static class ShadowJsonConfig {
+    static class ShadowJsonConfig
+    {
         int version;
         ArrayList<ServerConfig> servers;
     }
 }
 
-public class ShadowSocketFactory extends SocketFactory {
+public class ShadowSocketFactory extends SocketFactory
+{
     final ShadowConfig shadowConfig;
     final String shadowHost;
     final int shadowPort;
 
-
-    public ShadowSocketFactory(ShadowConfig shadowConfig, String shadowHost, int shadowPort) {
+    public ShadowSocketFactory(ShadowConfig shadowConfig, String shadowHost, int shadowPort)
+    {
         this.shadowConfig = shadowConfig;
         this.shadowHost = shadowHost;
         this.shadowPort = shadowPort;
     }
 
     @RequiresApi(api = Build.VERSION_CODES.N)
-    public ShadowSocketFactory(URL url, UUID uuid) throws IOException {
+    public ShadowSocketFactory(URL url, UUID uuid) throws IOException
+    {
         if (!url.getProtocol().equals("https")) {
             System.out.println("protocol must be https");
         }
@@ -63,21 +67,19 @@ public class ShadowSocketFactory extends SocketFactory {
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
             jsonText = reader.lines().collect(Collectors.joining(System.lineSeparator()));
         }
+
         Gson gson = new Gson();
         JsonConfig.ShadowJsonConfig jsonConfig = gson.fromJson(jsonText, JsonConfig.ShadowJsonConfig.class);
         JsonConfig.ServerConfig serverConfig = jsonConfig.servers.get(0);
 
-        if (UUID.fromString(serverConfig.id) != uuid) {
-            // FIXME: next 2 lines for debugging only
-            System.out.println("serverConfig uuid string: " + serverConfig.id);
-            System.out.println("provided uuid string:     " + uuid.toString());
+        UUID serverConfigUUID = UUID.fromString(serverConfig.id);
 
-            System.out.println("uuid does not match");
+        if (!serverConfigUUID.equals(uuid))
+        {
+            System.out.println("ShadowSocketFactory init: UUIDs do not not match");
         }
 
-        ShadowConfig shadowConfig = new ShadowConfig(serverConfig.password, serverConfig.method);
-
-        this.shadowConfig = shadowConfig;
+        this.shadowConfig = new ShadowConfig(serverConfig.password, serverConfig.method);
         this.shadowHost = serverConfig.server;
         this.shadowPort = serverConfig.server_port;
     }
@@ -124,9 +126,12 @@ public class ShadowSocketFactory extends SocketFactory {
 
     @Override
     public Socket createSocket() throws IOException {
-        try {
+        try
+        {
             return new ShadowSocket(shadowConfig, shadowHost, shadowPort);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchProviderException e) {
+        }
+        catch (NoSuchAlgorithmException | InvalidKeySpecException | NoSuchProviderException e)
+        {
             e.printStackTrace();
             throw new IOException();
         }
