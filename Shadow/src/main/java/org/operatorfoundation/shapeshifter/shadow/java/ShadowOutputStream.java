@@ -1,18 +1,10 @@
 package org.operatorfoundation.shapeshifter.shadow.java;
 
-import android.os.Build;
 import android.util.Log;
-
-import androidx.annotation.RequiresApi;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.util.Arrays;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
 
 // This abstract class is the superclass of all classes representing an output stream of bytes.
 public class ShadowOutputStream extends OutputStream {

@@ -241,7 +241,7 @@ public class DarkStar
         return Utility.plusEqualsByteArray(address, portBytes);
     }
 
-    public static byte[] generateServerConfirmationCode(String host, int port, PublicKey clientEphemeralPublicKey, PrivateKey clientEphemeralPrivateKey, PublicKey serverPersistentPublicKey) throws NoSuchAlgorithmException, UnknownHostException, InvalidKeyException
+    public static byte[] generateServerConfirmationCode(String host, int port, PublicKey clientEphemeralPublicKey, PrivateKey clientEphemeralPrivateKey, PublicKey serverPersistentPublicKey) throws NoSuchAlgorithmException, UnknownHostException
     {
         byte[] serverIdentifier = makeServerIdentifier(host, port);
         byte[] serverPersistentPublicKeyData = publicKeyToBytes(serverPersistentPublicKey);
