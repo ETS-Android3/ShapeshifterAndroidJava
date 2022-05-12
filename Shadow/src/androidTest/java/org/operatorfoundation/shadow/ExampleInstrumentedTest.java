@@ -11,6 +11,8 @@ import org.operatorfoundation.shapeshifter.shadow.java.ShadowConfig;
 import org.operatorfoundation.shapeshifter.shadow.java.ShadowSocket;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
@@ -35,6 +37,10 @@ public class ExampleInstrumentedTest
         // TODO: Use an actual server IP and port here:
         ShadowSocket shadowSocket = new ShadowSocket(config, "", 1234);
 
+        // Get the input and output streams for reading and writing
+        InputStream shadowInputStream = shadowSocket.getInputStream();
+        OutputStream shadowOutputStream = shadowSocket.getOutputStream();
+
         assertNotNull(shadowSocket);
         Log.d("ShadowTest", "Initialized a shadowsocket");
 
@@ -42,15 +48,15 @@ public class ExampleInstrumentedTest
         String httpRequest = "GET / HTTP/1.0\r\nConnection: close\r\n\r\n";
         byte[] textBytes = httpRequest.getBytes();
 
-        shadowSocket.getOutputStream().write(textBytes);
+        shadowOutputStream.write(textBytes);
         Log.d("ShadowTest", "Wrote some bytes.");
 
-        shadowSocket.getOutputStream().flush();
+        shadowOutputStream.flush();
         Log.d("ShadowTest", "Flushed the output stream.");
 
         // Read some data.
         byte[] buffer = new byte[235];
-        int bytesRead =  shadowSocket.getInputStream().read(buffer);
+        int bytesRead =  shadowInputStream.read(buffer);
 
         if (bytesRead > 0)
         {
