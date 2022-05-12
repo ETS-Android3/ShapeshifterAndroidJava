@@ -7,15 +7,11 @@ import android.util.Log;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
-import org.operatorfoundation.shapeshifter.shadow.java.Bloom;
 import org.operatorfoundation.shapeshifter.shadow.java.ShadowConfig;
 import org.operatorfoundation.shapeshifter.shadow.java.ShadowSocket;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.spec.InvalidKeySpecException;
